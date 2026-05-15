@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AlertTriangle, CheckCircle2, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { Search, ShieldCheck, ShieldAlert, ShieldQuestion, Pill } from "lucide-react";
 
@@ -356,7 +357,267 @@ function Index() {
             </div>
           )}
         </section>
+
+        <InteractionChecker />
       </div>
     </main>
+  );
+}
+
+type Severity = "Major" | "Moderate" | "Minor";
+
+interface Interaction {
+  a: string; // active ingredient (lowercase)
+  b: string;
+  severity: Severity;
+  note: string;
+}
+
+// Map drug brand -> primary active ingredient (lowercase keyword)
+const ACTIVE_INGREDIENT: Record<string, string> = {
+  "Panadol Extra": "paracetamol",
+  Tylenol: "paracetamol",
+  "Amoxil 500mg": "amoxicillin",
+  "Augmentin 625mg": "amoxicillin",
+  Coartem: "artemether",
+  "Lonart DS": "artemether",
+  "Amatem Forte": "artemether",
+  "Postinor-2": "levonorgestrel",
+  "Flagyl 200mg": "metronidazole",
+  "Ciprotab 500mg": "ciprofloxacin",
+  "Ventolin Inhaler": "salbutamol",
+  "Glucophage 500mg": "metformin",
+  "Lipitor 20mg": "atorvastatin",
+  "Zinnat 500mg": "cefuroxime",
+  "Diclofenac Sodium 50mg": "diclofenac",
+  "Loratadine 10mg": "loratadine",
+  Septrin: "co-trimoxazole",
+  "Omeprazole 20mg": "omeprazole",
+  "Tramadol 100mg": "tramadol",
+  "Codeine Linctus": "codeine",
+  "Vitamin C 1000mg": "ascorbic acid",
+  "Folic Acid 5mg": "folic acid",
+};
+
+const INTERACTIONS: Interaction[] = [
+  {
+    a: "tramadol",
+    b: "codeine",
+    severity: "Major",
+    note: "Combined opioids increase risk of respiratory depression, sedation, and overdose.",
+  },
+  {
+    a: "tramadol",
+    b: "paracetamol",
+    severity: "Minor",
+    note: "Generally safe combination, but watch total daily paracetamol dose (max 4g).",
+  },
+  {
+    a: "diclofenac",
+    b: "paracetamol",
+    severity: "Minor",
+    note: "Often co-prescribed; monitor for GI irritation with prolonged diclofenac use.",
+  },
+  {
+    a: "ciprofloxacin",
+    b: "metformin",
+    severity: "Moderate",
+    note: "Ciprofloxacin may alter blood glucose levels in patients on metformin.",
+  },
+  {
+    a: "atorvastatin",
+    b: "ciprofloxacin",
+    severity: "Moderate",
+    note: "Increased risk of myopathy/rhabdomyolysis when combined.",
+  },
+  {
+    a: "metronidazole",
+    b: "atorvastatin",
+    severity: "Moderate",
+    note: "Metronidazole may increase atorvastatin levels — monitor for muscle pain.",
+  },
+  {
+    a: "omeprazole",
+    b: "atorvastatin",
+    severity: "Minor",
+    note: "Minor pharmacokinetic interaction; clinically usually insignificant.",
+  },
+  {
+    a: "co-trimoxazole",
+    b: "metformin",
+    severity: "Major",
+    note: "Increases risk of hypoglycemia. Monitor blood sugar closely.",
+  },
+  {
+    a: "codeine",
+    b: "paracetamol",
+    severity: "Minor",
+    note: "Common combination (e.g., co-codamol). Respect paracetamol daily limit.",
+  },
+  {
+    a: "amoxicillin",
+    b: "levonorgestrel",
+    severity: "Moderate",
+    note: "Antibiotics may reduce hormonal contraceptive effectiveness — use backup method.",
+  },
+  {
+    a: "salbutamol",
+    b: "atorvastatin",
+    severity: "Minor",
+    note: "No significant interaction expected.",
+  },
+];
+
+function findInteraction(ingA: string, ingB: string): Interaction | undefined {
+  return INTERACTIONS.find(
+    (i) =>
+      (i.a === ingA && i.b === ingB) || (i.a === ingB && i.b === ingA),
+  );
+}
+
+function severityClasses(s: Severity) {
+  switch (s) {
+    case "Major":
+      return "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900";
+    case "Moderate":
+      return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900";
+    case "Minor":
+      return "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-900";
+  }
+}
+
+function InteractionChecker() {
+  const [selected, setSelected] = useState<string[]>([]);
+  const [picker, setPicker] = useState("");
+
+  const available = DB.map((d) => d.name).filter((n) => !selected.includes(n));
+
+  const addDrug = () => {
+    if (!picker || selected.includes(picker)) return;
+    setSelected([...selected, picker]);
+    setPicker("");
+  };
+
+  const remove = (name: string) =>
+    setSelected(selected.filter((n) => n !== name));
+
+  // Compute pairwise interactions
+  const findings: { drugA: string; drugB: string; interaction: Interaction }[] =
+    [];
+  for (let i = 0; i < selected.length; i++) {
+    for (let j = i + 1; j < selected.length; j++) {
+      const ingA = ACTIVE_INGREDIENT[selected[i]];
+      const ingB = ACTIVE_INGREDIENT[selected[j]];
+      if (!ingA || !ingB) continue;
+      const hit = findInteraction(ingA, ingB);
+      if (hit) {
+        findings.push({
+          drugA: selected[i],
+          drugB: selected[j],
+          interaction: hit,
+        });
+      }
+    }
+  }
+
+  return (
+    <section className="mt-12 border-t border-border pt-10">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-foreground">
+          Drug Interaction Checker
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add the medications you're taking to check for known interactions.
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <select
+          value={picker}
+          onChange={(e) => setPicker(e.target.value)}
+          className="flex-1 rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="">Select a drug…</option>
+          {available.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={addDrug}
+          disabled={!picker}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
+          Add
+        </button>
+      </div>
+
+      {selected.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {selected.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+            >
+              {name}
+              <button
+                type="button"
+                onClick={() => remove(name)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={`Remove ${name}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {selected.length >= 2 && (
+        <div className="mt-6">
+          {findings.length === 0 ? (
+            <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <div>
+                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                  No known interactions found
+                </p>
+                <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                  Always confirm with a licensed pharmacist before combining
+                  medications.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {findings.map((f, idx) => (
+                <li
+                  key={idx}
+                  className={`flex items-start gap-3 rounded-lg border p-4 ${severityClasses(f.interaction.severity)}`}
+                >
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold">
+                        {f.drugA} ↔ {f.drugB}
+                      </span>
+                      <span className="rounded-full border border-current px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                        {f.interaction.severity}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed">
+                      {f.interaction.note}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
