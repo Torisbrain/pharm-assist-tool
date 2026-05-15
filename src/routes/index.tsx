@@ -331,8 +331,9 @@ function Index() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                title={`Searches nafdac.gov.ng for NAFDAC No. ${result.nafdac}`}
               >
-                Verify on nafdac.gov.ng
+                Verify {result.manufacturer} record on nafdac.gov.ng
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
               </a>
 
