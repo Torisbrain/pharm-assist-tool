@@ -495,6 +495,20 @@ const ACTIVE_INGREDIENT: Record<string, string> = {
   "Codeine Linctus": "codeine",
   "Vitamin C 1000mg": "ascorbic acid",
   "Folic Acid 5mg": "folic acid",
+  "Aspirin 75mg": "aspirin",
+  "Ibuprofen 400mg": "ibuprofen",
+  "Lisinopril 10mg": "lisinopril",
+  "Amlodipine 5mg": "amlodipine",
+  "Warfarin 5mg": "warfarin",
+  "Insulin (Mixtard 30)": "insulin",
+  "Levofloxacin 500mg": "levofloxacin",
+  "Erythromycin 500mg": "erythromycin",
+  "Azithromycin 500mg": "azithromycin",
+  "Fluconazole 150mg": "fluconazole",
+  "Prednisolone 5mg": "prednisolone",
+  "Hydrochlorothiazide 25mg": "hydrochlorothiazide",
+  "Losartan 50mg": "losartan",
+  "Clopidogrel 75mg": "clopidogrel",
 };
 
 const INTERACTIONS: Interaction[] = [
