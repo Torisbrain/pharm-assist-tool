@@ -486,6 +486,24 @@ function severityClasses(s: Severity) {
   }
 }
 
+const SEVERITY_ACTION: Record<Severity, { label: string; detail: string }> = {
+  Major: {
+    label: "Avoid this combination",
+    detail:
+      "Do not take together unless explicitly directed by a physician. Seek immediate pharmacist or doctor review.",
+  },
+  Moderate: {
+    label: "Use with caution — consult a pharmacist",
+    detail:
+      "May be acceptable with monitoring or dose adjustment. Confirm with a licensed pharmacist before continuing both.",
+  },
+  Minor: {
+    label: "Take extra precautions",
+    detail:
+      "Generally safe together; observe dosage limits and watch for unusual side effects.",
+  },
+};
+
 function InteractionChecker() {
   const [selected, setSelected] = useState<string[]>([]);
   const [picker, setPicker] = useState("");
