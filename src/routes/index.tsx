@@ -663,6 +663,7 @@ const INTERACTIONS: Interaction[] = [
     note: "Additive QT prolongation risk." },
   { a: "artemether", b: "erythromycin", severity: "Moderate",
     note: "Additive QT risk; avoid combination if possible." },
+];
 
 function findInteraction(ingA: string, ingB: string): Interaction | undefined {
   return INTERACTIONS.find(
