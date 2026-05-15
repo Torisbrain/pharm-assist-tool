@@ -486,6 +486,24 @@ function severityClasses(s: Severity) {
   }
 }
 
+const SEVERITY_ACTION: Record<Severity, { label: string; detail: string }> = {
+  Major: {
+    label: "Avoid this combination",
+    detail:
+      "Do not take together unless explicitly directed by a physician. Seek immediate pharmacist or doctor review.",
+  },
+  Moderate: {
+    label: "Use with caution — consult a pharmacist",
+    detail:
+      "May be acceptable with monitoring or dose adjustment. Confirm with a licensed pharmacist before continuing both.",
+  },
+  Minor: {
+    label: "Take extra precautions",
+    detail:
+      "Generally safe together; observe dosage limits and watch for unusual side effects.",
+  },
+};
+
 function InteractionChecker() {
   const [selected, setSelected] = useState<string[]>([]);
   const [picker, setPicker] = useState("");
@@ -611,6 +629,14 @@ function InteractionChecker() {
                     <p className="mt-1 text-xs leading-relaxed">
                       {f.interaction.note}
                     </p>
+                    <div className="mt-2 rounded-md border border-current/30 bg-background/40 px-3 py-2">
+                      <p className="text-xs font-semibold">
+                        Recommended: {SEVERITY_ACTION[f.interaction.severity].label}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed opacity-90">
+                        {SEVERITY_ACTION[f.interaction.severity].detail}
+                      </p>
+                    </div>
                   </div>
                 </li>
               ))}
