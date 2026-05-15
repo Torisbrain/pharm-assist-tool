@@ -357,6 +357,8 @@ function Index() {
             </div>
           )}
         </section>
+
+        <InteractionChecker />
       </div>
     </main>
   );
