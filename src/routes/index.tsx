@@ -629,6 +629,14 @@ function InteractionChecker() {
                     <p className="mt-1 text-xs leading-relaxed">
                       {f.interaction.note}
                     </p>
+                    <div className="mt-2 rounded-md border border-current/30 bg-background/40 px-3 py-2">
+                      <p className="text-xs font-semibold">
+                        Recommended: {SEVERITY_ACTION[f.interaction.severity].label}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed opacity-90">
+                        {SEVERITY_ACTION[f.interaction.severity].detail}
+                      </p>
+                    </div>
                   </div>
                 </li>
               ))}
