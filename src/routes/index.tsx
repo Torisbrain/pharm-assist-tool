@@ -463,12 +463,14 @@ function Index() {
 }
 
 type Severity = "Major" | "Moderate" | "Minor";
+type Evidence = "High" | "Medium" | "Low";
 
 interface Interaction {
   a: string; // active ingredient (lowercase)
   b: string;
   severity: Severity;
   note: string;
+  evidence?: Evidence; // optional override; otherwise derived from severity + overrides map
 }
 
 // Map drug brand -> primary active ingredient (lowercase keyword)
@@ -683,6 +685,48 @@ function severityClasses(s: Severity) {
   }
 }
 
+const EVIDENCE_OVERRIDES: Record<string, Evidence> = {
+  "aspirin|ibuprofen": "High",
+  "ibuprofen|lisinopril": "High",
+  "ibuprofen|losartan": "High",
+  "paracetamol|warfarin": "High",
+  "insulin|prednisolone": "High",
+  "metformin|prednisolone": "High",
+  "amoxicillin|levonorgestrel": "Low",
+  "azithromycin|levonorgestrel": "Low",
+  "fluconazole|levonorgestrel": "Low",
+  "ciprofloxacin|metformin": "Medium",
+  "atorvastatin|salbutamol": "Low",
+  "atorvastatin|omeprazole": "Low",
+  "amlodipine|atorvastatin": "Low",
+};
+
+function getEvidence(i: Interaction): Evidence {
+  if (i.evidence) return i.evidence;
+  const key = [i.a, i.b].sort().join("|");
+  if (EVIDENCE_OVERRIDES[key]) return EVIDENCE_OVERRIDES[key];
+  if (i.severity === "Major") return "High";
+  if (i.severity === "Moderate") return "Medium";
+  return "Low";
+}
+
+function evidenceClasses(e: Evidence) {
+  switch (e) {
+    case "High":
+      return "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800";
+    case "Medium":
+      return "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800";
+    case "Low":
+      return "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700";
+  }
+}
+
+const EVIDENCE_DESCRIPTION: Record<Evidence, string> = {
+  High: "Well-documented in clinical guidelines and studies — flag is strongly supported.",
+  Medium: "Reported in clinical literature; effect may vary between patients.",
+  Low: "Limited or debated evidence; included as a precaution.",
+};
+
 const SEVERITY_ACTION: Record<Severity, { label: string; detail: string }> = {
   Major: {
     label: "Avoid this combination",
@@ -822,9 +866,23 @@ function InteractionChecker() {
                       <span className="rounded-full border border-current px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
                         {f.interaction.severity}
                       </span>
+                      {(() => {
+                        const ev = getEvidence(f.interaction);
+                        return (
+                          <span
+                            title={EVIDENCE_DESCRIPTION[ev]}
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${evidenceClasses(ev)}`}
+                          >
+                            {ev} evidence
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="mt-1 text-xs leading-relaxed">
                       {f.interaction.note}
+                    </p>
+                    <p className="mt-1 text-[11px] italic opacity-80">
+                      {EVIDENCE_DESCRIPTION[getEvidence(f.interaction)]}
                     </p>
                     <div className="mt-2 rounded-md border border-current/30 bg-background/40 px-3 py-2">
                       <p className="text-xs font-semibold">
