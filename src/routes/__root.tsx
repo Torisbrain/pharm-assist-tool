@@ -112,11 +112,45 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function NavBar() {
+  const links = [
+    { to: "/", label: "Verify Drug" },
+    { to: "/interactions", label: "Interactions" },
+    { to: "/pharmacies", label: "Pharmacies" },
+    { to: "/dashboard", label: "Pharmacy Dashboard" },
+  ] as const;
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+        <Link to="/" className="flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
+            PV
+          </span>
+          <span className="text-sm font-semibold text-foreground">PharmVerify NG</span>
+        </Link>
+        <nav className="flex items-center gap-1 overflow-x-auto">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              activeOptions={{ exact: l.to === "/" }}
+              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary data-[status=active]:font-medium"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </header>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <NavBar />
       <Outlet />
     </QueryClientProvider>
   );
