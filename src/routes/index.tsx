@@ -463,12 +463,14 @@ function Index() {
 }
 
 type Severity = "Major" | "Moderate" | "Minor";
+type Evidence = "High" | "Medium" | "Low";
 
 interface Interaction {
   a: string; // active ingredient (lowercase)
   b: string;
   severity: Severity;
   note: string;
+  evidence?: Evidence; // optional override; otherwise derived from severity + overrides map
 }
 
 // Map drug brand -> primary active ingredient (lowercase keyword)
