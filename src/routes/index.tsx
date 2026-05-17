@@ -727,7 +727,7 @@ const EVIDENCE_DESCRIPTION: Record<Evidence, string> = {
   Low: "Limited or debated evidence; included as a precaution.",
 };
 
-
+const SEVERITY_ACTION: Record<Severity, { label: string; detail: string }> = {
   Major: {
     label: "Avoid this combination",
     detail:
