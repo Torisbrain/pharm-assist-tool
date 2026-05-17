@@ -685,7 +685,49 @@ function severityClasses(s: Severity) {
   }
 }
 
-const SEVERITY_ACTION: Record<Severity, { label: string; detail: string }> = {
+const EVIDENCE_OVERRIDES: Record<string, Evidence> = {
+  "aspirin|ibuprofen": "High",
+  "ibuprofen|lisinopril": "High",
+  "ibuprofen|losartan": "High",
+  "paracetamol|warfarin": "High",
+  "insulin|prednisolone": "High",
+  "metformin|prednisolone": "High",
+  "amoxicillin|levonorgestrel": "Low",
+  "azithromycin|levonorgestrel": "Low",
+  "fluconazole|levonorgestrel": "Low",
+  "ciprofloxacin|metformin": "Medium",
+  "atorvastatin|salbutamol": "Low",
+  "atorvastatin|omeprazole": "Low",
+  "amlodipine|atorvastatin": "Low",
+};
+
+function getEvidence(i: Interaction): Evidence {
+  if (i.evidence) return i.evidence;
+  const key = [i.a, i.b].sort().join("|");
+  if (EVIDENCE_OVERRIDES[key]) return EVIDENCE_OVERRIDES[key];
+  if (i.severity === "Major") return "High";
+  if (i.severity === "Moderate") return "Medium";
+  return "Low";
+}
+
+function evidenceClasses(e: Evidence) {
+  switch (e) {
+    case "High":
+      return "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800";
+    case "Medium":
+      return "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800";
+    case "Low":
+      return "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700";
+  }
+}
+
+const EVIDENCE_DESCRIPTION: Record<Evidence, string> = {
+  High: "Well-documented in clinical guidelines and studies — flag is strongly supported.",
+  Medium: "Reported in clinical literature; effect may vary between patients.",
+  Low: "Limited or debated evidence; included as a precaution.",
+};
+
+
   Major: {
     label: "Avoid this combination",
     detail:
