@@ -866,9 +866,23 @@ function InteractionChecker() {
                       <span className="rounded-full border border-current px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
                         {f.interaction.severity}
                       </span>
+                      {(() => {
+                        const ev = getEvidence(f.interaction);
+                        return (
+                          <span
+                            title={EVIDENCE_DESCRIPTION[ev]}
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${evidenceClasses(ev)}`}
+                          >
+                            {ev} evidence
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="mt-1 text-xs leading-relaxed">
                       {f.interaction.note}
+                    </p>
+                    <p className="mt-1 text-[11px] italic opacity-80">
+                      {EVIDENCE_DESCRIPTION[getEvidence(f.interaction)]}
                     </p>
                     <div className="mt-2 rounded-md border border-current/30 bg-background/40 px-3 py-2">
                       <p className="text-xs font-semibold">
