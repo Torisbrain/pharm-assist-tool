@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, Plus, X, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Plus, X, ShieldCheck, Stethoscope } from "lucide-react";
 import {
   DB,
   ACTIVE_INGREDIENT,
