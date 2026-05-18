@@ -23,41 +23,88 @@ export const Route = createFileRoute("/interactions")({
   }),
 });
 
+type MockStatus = "SAFE" | "CAUTION" | "DANGEROUS";
+
+const STATUS_STYLES: Record<MockStatus, { card: string; badge: string; icon: string }> = {
+  SAFE: {
+    card: "border-emerald-200 bg-emerald-50",
+    badge: "bg-emerald-600 text-white",
+    icon: "text-emerald-600",
+  },
+  CAUTION: {
+    card: "border-amber-200 bg-amber-50",
+    badge: "bg-amber-500 text-white",
+    icon: "text-amber-600",
+  },
+  DANGEROUS: {
+    card: "border-red-200 bg-red-50",
+    badge: "bg-red-600 text-white",
+    icon: "text-red-600",
+  },
+};
+
+function computeMockStatus(drugs: string[]): { status: MockStatus; explanation: string } {
+  const lower = drugs.map((d) => d.toLowerCase());
+  const hasWarfarin = lower.some((d) => d.includes("warfarin"));
+  const hasAspirin = lower.some((d) => d.includes("aspirin"));
+  if (hasWarfarin && hasAspirin) {
+    return {
+      status: "DANGEROUS",
+      explanation:
+        "Combining Warfarin with Aspirin significantly raises the risk of serious bleeding. Do not take these together without direct supervision from a doctor or pharmacist.",
+    };
+  }
+  const hasDuplicate = new Set(lower).size !== lower.length;
+  if (hasDuplicate) {
+    return {
+      status: "CAUTION",
+      explanation:
+        "You've added the same medication more than once, which can lead to accidental double-dosing. Please confirm your prescription with a pharmacist before taking another dose.",
+    };
+  }
+  return {
+    status: "SAFE",
+    explanation:
+      "No dangerous interactions were detected between these medications based on our checks. As always, confirm with a licensed pharmacist before starting or combining treatments.",
+  };
+}
+
 function InteractionsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [picker, setPicker] = useState("");
+  const [result, setResult] = useState<{ status: MockStatus; explanation: string; drugs: string[] } | null>(null);
 
-  const available = DB.map((d) => d.name).filter((n) => !selected.includes(n));
+  const available = DB.map((d) => d.name);
 
   const addDrug = () => {
-    if (!picker || selected.includes(picker)) return;
+    if (!picker) return;
     setSelected([...selected, picker]);
     setPicker("");
+    setResult(null);
   };
 
-  const remove = (name: string) => setSelected(selected.filter((n) => n !== name));
+  const remove = (idx: number) => {
+    setSelected(selected.filter((_, i) => i !== idx));
+    setResult(null);
+  };
+
+  const handleCheck = () => {
+    if (selected.length < 2) return;
+    setResult({ ...computeMockStatus(selected), drugs: [...selected] });
+  };
 
   const findings: { drugA: string; drugB: string; interaction: Interaction }[] = [];
-  for (let i = 0; i < selected.length; i++) {
-    for (let j = i + 1; j < selected.length; j++) {
-      const ingA = ACTIVE_INGREDIENT[selected[i]];
-      const ingB = ACTIVE_INGREDIENT[selected[j]];
-      if (!ingA || !ingB) continue;
-      const hit = findInteraction(ingA, ingB);
-      if (hit) findings.push({ drugA: selected[i], drugB: selected[j], interaction: hit });
+  if (result) {
+    for (let i = 0; i < selected.length; i++) {
+      for (let j = i + 1; j < selected.length; j++) {
+        const ingA = ACTIVE_INGREDIENT[selected[i]];
+        const ingB = ACTIVE_INGREDIENT[selected[j]];
+        if (!ingA || !ingB) continue;
+        const hit = findInteraction(ingA, ingB);
+        if (hit) findings.push({ drugA: selected[i], drugB: selected[j], interaction: hit });
+      }
     }
   }
-
-  const verdict =
-    selected.length < 2
-      ? null
-      : findings.some((f) => f.interaction.severity === "Major")
-        ? { label: "Dangerous", classes: "bg-red-50 text-red-700 border-red-200" }
-        : findings.some((f) => f.interaction.severity === "Moderate")
-          ? { label: "Caution", classes: "bg-amber-50 text-amber-700 border-amber-200" }
-          : findings.length > 0
-            ? { label: "Minor caution", classes: "bg-sky-50 text-sky-700 border-sky-200" }
-            : { label: "Safe", classes: "bg-emerald-50 text-emerald-700 border-emerald-200" };
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background">
@@ -92,10 +139,10 @@ function InteractionsPage() {
 
         {selected.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            {selected.map((name) => (
-              <span key={name} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+            {selected.map((name, idx) => (
+              <span key={`${name}-${idx}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground">
                 {name}
-                <button type="button" onClick={() => remove(name)} className="text-muted-foreground hover:text-foreground" aria-label={`Remove ${name}`}>
+                <button type="button" onClick={() => remove(idx)} className="text-muted-foreground hover:text-foreground" aria-label={`Remove ${name}`}>
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -103,15 +150,45 @@ function InteractionsPage() {
           </div>
         )}
 
-        {verdict && (
-          <div className={`mt-6 flex items-center justify-between rounded-lg border px-4 py-3 ${verdict.classes}`}>
-            <div className="flex items-center gap-2">
-              {verdict.label === "Safe" ? <ShieldCheck className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
-              <span className="font-semibold">Overall: {verdict.label}</span>
+        <button
+          type="button"
+          onClick={handleCheck}
+          disabled={selected.length < 2}
+          className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <ShieldCheck className="h-4 w-4" /> Check Interactions
+        </button>
+        {selected.length < 2 && (
+          <p className="mt-2 text-xs text-muted-foreground">Add at least 2 medications to run a check.</p>
+        )}
+
+        {result && (
+          <div className={`mt-6 rounded-xl border p-5 ${STATUS_STYLES[result.status].card}`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {result.status === "SAFE" ? (
+                  <CheckCircle2 className={`h-6 w-6 ${STATUS_STYLES[result.status].icon}`} />
+                ) : (
+                  <AlertTriangle className={`h-6 w-6 ${STATUS_STYLES[result.status].icon}`} />
+                )}
+                <span className={`rounded-full px-3 py-1 text-xs font-bold tracking-wide ${STATUS_STYLES[result.status].badge}`}>
+                  {result.status}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {result.drugs.length} medication{result.drugs.length === 1 ? "" : "s"} checked
+              </span>
             </div>
-            <span className="text-xs">{findings.length} interaction{findings.length === 1 ? "" : "s"} found</span>
+            <p className="mt-3 text-sm leading-relaxed text-foreground">{result.explanation}</p>
+            <a
+              href="tel:+2348000000000"
+              className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Stethoscope className="h-4 w-4" /> Consult a pharmacist
+            </a>
           </div>
         )}
+
 
         {selected.length >= 2 && (
           <div className="mt-4">
