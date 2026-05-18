@@ -190,7 +190,7 @@ function InteractionsPage() {
         )}
 
 
-        {selected.length >= 2 && (
+        {result && selected.length >= 2 && (
           <div className="mt-4">
             {findings.length === 0 ? (
               <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
