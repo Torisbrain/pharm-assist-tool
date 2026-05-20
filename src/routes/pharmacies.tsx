@@ -13,7 +13,11 @@ export const Route = createFileRoute("/pharmacies")({
   head: () => ({
     meta: [
       { title: "Pharmacy Locator — PharmVerify NG" },
-      { name: "description", content: "Find nearby Nigerian pharmacies that stock your medication, with stock status and distance." },
+      {
+        name: "description",
+        content:
+          "Find nearby Nigerian pharmacies that stock your medication, with stock status and distance.",
+      },
     ],
   }),
 });
@@ -76,7 +80,10 @@ function PharmaciesPage() {
             {results.map((p) => {
               const { Icon, classes } = stockBadge(p.stock);
               return (
-                <article key={p.name} className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <article
+                  key={p.name}
+                  className="rounded-lg border border-border bg-card p-5 shadow-sm"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-base font-semibold text-card-foreground">{p.name}</h2>
@@ -88,11 +95,15 @@ function PharmaciesPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${classes}`}>
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${classes}`}
+                      >
                         <Icon className="h-3.5 w-3.5" />
                         {p.stock}
                       </span>
-                      <p className="mt-2 text-sm font-medium text-foreground">{p.distanceKm} km away</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {p.distanceKm} km away
+                      </p>
                     </div>
                   </div>
                 </article>

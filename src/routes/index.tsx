@@ -34,7 +34,9 @@ function StatusBadge({ status }: { status: Status }) {
   } as const;
   const { icon: Icon, classes } = map[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${classes}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${classes}`}
+    >
       <Icon className="h-3.5 w-3.5" />
       {status}
     </span>
@@ -52,9 +54,7 @@ function Index() {
     setSearched(true);
   };
 
-  const suggestions = !searched
-    ? DB.slice(0, 6).map((d) => d.name)
-    : [];
+  const suggestions = !searched ? DB.slice(0, 6).map((d) => d.name) : [];
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background">
@@ -67,7 +67,8 @@ function Index() {
             Verify any drug in seconds
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Search by drug name or NAFDAC number to check authenticity, manufacturer, and safer alternatives.
+            Search by drug name or NAFDAC number to check authenticity, manufacturer, and safer
+            alternatives.
           </p>
         </header>
 
@@ -118,7 +119,8 @@ function Index() {
                 <StatusBadge status="Unknown" />
               </div>
               <p className="text-sm text-muted-foreground">
-                We couldn't find "{query}" in the NAFDAC registry. Verify the spelling or NAFDAC number, and report suspicious products to NAFDAC.
+                We couldn't find "{query}" in the NAFDAC registry. Verify the spelling or NAFDAC
+                number, and report suspicious products to NAFDAC.
               </p>
               <a
                 href={`https://nafdac.gov.ng/our-services/registered-products/?search=${encodeURIComponent(query)}`}
@@ -144,14 +146,21 @@ function Index() {
 
               <dl className="space-y-3 border-t border-border pt-4">
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Manufacturer</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Manufacturer
+                  </dt>
                   <dd className="mt-1 text-sm text-foreground">{result.manufacturer}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Generic Alternatives</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Generic Alternatives
+                  </dt>
                   <dd className="mt-2 flex flex-wrap gap-2">
                     {result.generics.map((g) => (
-                      <span key={g} className="rounded-md bg-secondary px-2.5 py-1 text-xs text-secondary-foreground">
+                      <span
+                        key={g}
+                        className="rounded-md bg-secondary px-2.5 py-1 text-xs text-secondary-foreground"
+                      >
                         {g}
                       </span>
                     ))}
@@ -181,7 +190,8 @@ function Index() {
 
               {result.status === "Flagged" && (
                 <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-                  This product has been flagged. Do not consume without consulting a licensed pharmacist.
+                  This product has been flagged. Do not consume without consulting a licensed
+                  pharmacist.
                 </p>
               )}
             </div>
@@ -193,10 +203,15 @@ function Index() {
             to="/interactions"
             className="group rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-accent"
           >
-            <h3 className="text-base font-semibold text-card-foreground">Drug Interaction Checker</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Add multiple drugs to see how they interact.</p>
+            <h3 className="text-base font-semibold text-card-foreground">
+              Drug Interaction Checker
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add multiple drugs to see how they interact.
+            </p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-              Open checker <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              Open checker{" "}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
           <Link
@@ -204,9 +219,12 @@ function Index() {
             className="group rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-accent"
           >
             <h3 className="text-base font-semibold text-card-foreground">Pharmacy Locator</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Find nearby pharmacies that stock your medication.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Find nearby pharmacies that stock your medication.
+            </p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-              Locate <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              Locate{" "}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
         </section>

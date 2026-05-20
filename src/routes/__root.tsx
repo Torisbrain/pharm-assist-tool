@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import appCss from "../styles.css?url";
 
@@ -73,17 +74,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Lovable App" },
-      { name: "description", content: "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria." },
+      {
+        name: "description",
+        content:
+          "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria." },
+      {
+        property: "og:description",
+        content:
+          "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5515d70-d905-4b3d-beff-b6757fc0b644/id-preview-63052146--8fd2ce1e-151d-4abc-91ab-febf84acc34a.lovable.app-1778880582069.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5515d70-d905-4b3d-beff-b6757fc0b644/id-preview-63052146--8fd2ce1e-151d-4abc-91ab-febf84acc34a.lovable.app-1778880582069.png" },
+      {
+        name: "twitter:description",
+        content:
+          "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5515d70-d905-4b3d-beff-b6757fc0b644/id-preview-63052146--8fd2ce1e-151d-4abc-91ab-febf84acc34a.lovable.app-1778880582069.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5515d70-d905-4b3d-beff-b6757fc0b644/id-preview-63052146--8fd2ce1e-151d-4abc-91ab-febf84acc34a.lovable.app-1778880582069.png",
+      },
     ],
     links: [
       {
@@ -107,6 +128,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <Scripts />
+        <SpeedInsights />
       </body>
     </html>
   );
