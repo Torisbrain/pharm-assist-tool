@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Boxes, ShieldCheck, Bell, CheckCircle2, AlertTriangle, ShieldQuestion } from "lucide-react";
+import {
+  Boxes,
+  ShieldCheck,
+  Bell,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldQuestion,
+} from "lucide-react";
 import { DB } from "@/lib/drugs";
 
 export const Route = createFileRoute("/dashboard")({
@@ -8,7 +15,10 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Pharmacy Dashboard — PharmVerify NG" },
-      { name: "description", content: "B2B pharmacy portal: manage inventory, verify suppliers, and view NAFDAC alerts." },
+      {
+        name: "description",
+        content: "B2B pharmacy portal: manage inventory, verify suppliers, and view NAFDAC alerts.",
+      },
     ],
   }),
 });
@@ -34,11 +44,36 @@ const INVENTORY: InventoryItem[] = [
 ];
 
 const ALERTS = [
-  { date: "2026-05-12", title: "Counterfeit Tramadol 100mg detected", region: "Lagos", severity: "High" },
-  { date: "2026-05-09", title: "Recall: Postinor-2 (Batch PN-9912-B)", region: "Nationwide", severity: "High" },
-  { date: "2026-05-02", title: "Substandard Codeine Linctus seized", region: "Kano", severity: "Medium" },
-  { date: "2026-04-27", title: "Unregistered antimalarial advisory", region: "Port Harcourt", severity: "Medium" },
-  { date: "2026-04-18", title: "Storage temperature warning — Insulin", region: "Nationwide", severity: "Low" },
+  {
+    date: "2026-05-12",
+    title: "Counterfeit Tramadol 100mg detected",
+    region: "Lagos",
+    severity: "High",
+  },
+  {
+    date: "2026-05-09",
+    title: "Recall: Postinor-2 (Batch PN-9912-B)",
+    region: "Nationwide",
+    severity: "High",
+  },
+  {
+    date: "2026-05-02",
+    title: "Substandard Codeine Linctus seized",
+    region: "Kano",
+    severity: "Medium",
+  },
+  {
+    date: "2026-04-27",
+    title: "Unregistered antimalarial advisory",
+    region: "Port Harcourt",
+    severity: "Medium",
+  },
+  {
+    date: "2026-04-18",
+    title: "Storage temperature warning — Insulin",
+    region: "Nationwide",
+    severity: "Low",
+  },
 ];
 
 const NAV: { id: Section; label: string; icon: typeof Boxes }[] = [
@@ -71,7 +106,9 @@ function DashboardPage() {
     <div className="flex min-h-[calc(100vh-3.5rem)] bg-background">
       <aside className="w-56 shrink-0 border-r border-border bg-sidebar">
         <div className="px-4 py-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pharmacy Portal</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Pharmacy Portal
+          </p>
           <p className="mt-1 text-sm font-semibold text-sidebar-foreground">HealthPlus — Ikeja</p>
         </div>
         <nav className="px-2 pb-4">
@@ -110,7 +147,9 @@ function InventoryView() {
     <section>
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Inventory</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Current stock levels and NAFDAC registration status.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Current stock levels and NAFDAC registration status.
+        </p>
       </header>
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
@@ -129,7 +168,9 @@ function InventoryView() {
                 <td className="px-4 py-3 text-muted-foreground">{i.nafdac}</td>
                 <td className="px-4 py-3 text-right">{i.qty}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusPill(i.status)}`}>
+                  <span
+                    className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusPill(i.status)}`}
+                  >
                     {i.status}
                   </span>
                 </td>
@@ -153,7 +194,8 @@ function SupplierView() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const found = DB.find(
-      (d) => d.nafdac.toLowerCase().replace(/[-\s]/g, "") === nafdac.toLowerCase().replace(/[-\s]/g, ""),
+      (d) =>
+        d.nafdac.toLowerCase().replace(/[-\s]/g, "") === nafdac.toLowerCase().replace(/[-\s]/g, ""),
     );
     if (!found) return setResult({ ok: false });
     setResult({ ok: found.status === "Verified", drug: found });
@@ -163,10 +205,15 @@ function SupplierView() {
     <section>
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Verify Supplier</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Cross-check a supplier shipment against the NAFDAC registry.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Cross-check a supplier shipment against the NAFDAC registry.
+        </p>
       </header>
 
-      <form onSubmit={submit} className="grid max-w-xl gap-4 rounded-lg border border-border bg-card p-5">
+      <form
+        onSubmit={submit}
+        className="grid max-w-xl gap-4 rounded-lg border border-border bg-card p-5"
+      >
         <div>
           <label className="mb-1 block text-xs font-medium text-foreground">Supplier name</label>
           <input
@@ -177,7 +224,9 @@ function SupplierView() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-foreground">NAFDAC number on shipment</label>
+          <label className="mb-1 block text-xs font-medium text-foreground">
+            NAFDAC number on shipment
+          </label>
           <input
             value={nafdac}
             onChange={(e) => setNafdac(e.target.value)}
@@ -202,7 +251,8 @@ function SupplierView() {
               <div className="text-sm">
                 <p className="font-semibold text-emerald-800">Supplier verified</p>
                 <p className="mt-1 text-emerald-700">
-                  NAFDAC No. {result.drug.nafdac} matches <strong>{result.drug.name}</strong> by {result.drug.manufacturer}.
+                  NAFDAC No. {result.drug.nafdac} matches <strong>{result.drug.name}</strong> by{" "}
+                  {result.drug.manufacturer}.
                 </p>
               </div>
             </div>
@@ -212,7 +262,8 @@ function SupplierView() {
               <div className="text-sm">
                 <p className="font-semibold text-red-800">Flagged product</p>
                 <p className="mt-1 text-red-700">
-                  {result.drug.name} (NAFDAC {result.drug.nafdac}) is currently flagged. Do not accept this shipment.
+                  {result.drug.name} (NAFDAC {result.drug.nafdac}) is currently flagged. Do not
+                  accept this shipment.
                 </p>
               </div>
             </div>
@@ -238,7 +289,9 @@ function AlertsView() {
     <section>
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">NAFDAC Alerts</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Recent recalls, counterfeit advisories, and safety bulletins.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Recent recalls, counterfeit advisories, and safety bulletins.
+        </p>
       </header>
       <ul className="space-y-3">
         {ALERTS.map((a) => (
@@ -250,7 +303,9 @@ function AlertsView() {
                   {a.region} · {a.date}
                 </p>
               </div>
-              <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${severityPill(a.severity)}`}>
+              <span
+                className={`inline-flex shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${severityPill(a.severity)}`}
+              >
                 {a.severity}
               </span>
             </div>
