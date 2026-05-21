@@ -1,23 +1,24 @@
-import { defineEventHandler, readBody } from "h3";
+import { json } from "@tanstack/start";
+import type { APIEvent } from "@tanstack/start";
 
-export default defineEventHandler(async (event) => {
-  const { query } = await readBody(event);
-
-  if (!query || !query.trim()) {
-    return {
-      name: query || "Unknown",
-      nafdacNumber: "Not found",
-      manufacturer: "Not found",
-      status: "Unknown",
-      activeIngredient: "Unknown",
-      dosage: "Unknown",
-      alternatives: [],
-      explanation: "Please enter a valid drug name or NAFDAC number.",
-      warning: "No information available."
-    };
-  }
-
+export async function POST(event: APIEvent) {
   try {
+    const { query } = await event.request.json();
+
+    if (!query || !query.trim()) {
+      return json({
+        name: query || "Unknown",
+        nafdacNumber: "Not found",
+        manufacturer: "Not found",
+        status: "Unknown",
+        activeIngredient: "Unknown",
+        dosage: "Unknown",
+        alternatives: [],
+        explanation: "Please enter a valid drug name or NAFDAC number.",
+        warning: "No information available."
+      });
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -67,11 +68,11 @@ Return JSON only. No markdown. No text outside JSON:
     let text = data?.content?.[0]?.text || "";
     text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const drug = JSON.parse(text);
-    return drug;
+    return json(drug);
   } catch (err) {
     console.error("Verification error:", err);
-    return {
-      name: query,
+    return json({
+      name: "Unknown",
       nafdacNumber: "Not found",
       manufacturer: "Not found",
       status: "Unknown",
@@ -80,6 +81,6 @@ Return JSON only. No markdown. No text outside JSON:
       alternatives: [],
       explanation: "Could not verify this drug. Please check nafdac.gov.ng or consult a pharmacist.",
       warning: "Exercise caution with unverified drugs."
-    };
+    });
   }
-});
+}
