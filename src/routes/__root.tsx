@@ -73,37 +73,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "PharmVerify NG" },
       {
         name: "description",
         content:
-          "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria.",
+          "PharmVerify NG allows users to quickly check drug authenticity, find pharmacies, and verify medications in Nigeria and across Africa.",
       },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { name: "author", content: "PharmVerify NG" },
+      { property: "og:title", content: "PharmVerify NG" },
       {
         property: "og:description",
         content:
-          "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria.",
+          "PharmVerify NG allows users to quickly check drug authenticity, find pharmacies, and verify medications in Nigeria and across Africa.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:site", content: "@PharmVerifyNG" },
+      { name: "twitter:title", content: "PharmVerify NG" },
       {
         name: "twitter:description",
         content:
-          "PharmVerify Search allows users to quickly check drug authenticity and find alternatives in Nigeria.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5515d70-d905-4b3d-beff-b6757fc0b644/id-preview-63052146--8fd2ce1e-151d-4abc-91ab-febf84acc34a.lovable.app-1778880582069.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5515d70-d905-4b3d-beff-b6757fc0b644/id-preview-63052146--8fd2ce1e-151d-4abc-91ab-febf84acc34a.lovable.app-1778880582069.png",
+          "PharmVerify NG allows users to quickly check drug authenticity, find pharmacies, and verify medications in Nigeria and across Africa.",
       },
     ],
     links: [
@@ -137,9 +127,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function NavBar() {
   const links = [
     { to: "/", label: "Verify Drug" },
+    { to: "/features", label: "Features" },
     { to: "/interactions", label: "Interactions" },
     { to: "/pharmacies", label: "Pharmacies" },
-    { to: "/dashboard", label: "Pharmacy Dashboard" },
+    { to: "/dashboard", label: "Dashboard" },
   ] as const;
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
@@ -156,7 +147,7 @@ function NavBar() {
               key={l.to}
               to={l.to}
               activeOptions={{ exact: l.to === "/" }}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary data-[status=active]:font-medium"
+              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary transition-colors"
             >
               {l.label}
             </Link>
