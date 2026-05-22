@@ -92,12 +92,13 @@ function GoogleMap({ pharmacies, userLat, userLng }: { pharmacies: Pharmacy[], u
     if (!mapRef.current) return;
 
     // Check if Google Maps is loaded
-    if (!window.google) {
+    const w = window as unknown as { google?: any };
+    if (!w.google) {
       console.warn("Google Maps API not loaded. Add your API key to environment variables.");
       return;
     }
 
-    const google = window.google;
+    const google = w.google;
     const mapInstance = new google.maps.Map(mapRef.current, {
       zoom: 14,
       center: { lat: userLat, lng: userLng },

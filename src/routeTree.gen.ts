@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PharmaciesRouteImport } from './routes/pharmacies'
 import { Route as InteractionsRouteImport } from './routes/interactions'
+import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiVerifyDrugRouteImport } from './routes/api/verify-drug'
 
 const PharmaciesRoute = PharmaciesRouteImport.update({
   id: '/pharmacies',
@@ -22,6 +24,11 @@ const PharmaciesRoute = PharmaciesRouteImport.update({
 const InteractionsRoute = InteractionsRouteImport.update({
   id: '/interactions',
   path: '/interactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -34,39 +41,71 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVerifyDrugRoute = ApiVerifyDrugRouteImport.update({
+  id: '/api/verify-drug',
+  path: '/api/verify-drug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
+  '/api/verify-drug': typeof ApiVerifyDrugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
+  '/api/verify-drug': typeof ApiVerifyDrugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
+  '/api/verify-drug': typeof ApiVerifyDrugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/interactions' | '/pharmacies'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/features'
+    | '/interactions'
+    | '/pharmacies'
+    | '/api/verify-drug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/interactions' | '/pharmacies'
-  id: '__root__' | '/' | '/dashboard' | '/interactions' | '/pharmacies'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/features'
+    | '/interactions'
+    | '/pharmacies'
+    | '/api/verify-drug'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/features'
+    | '/interactions'
+    | '/pharmacies'
+    | '/api/verify-drug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  FeaturesRoute: typeof FeaturesRoute
   InteractionsRoute: typeof InteractionsRoute
   PharmaciesRoute: typeof PharmaciesRoute
+  ApiVerifyDrugRoute: typeof ApiVerifyDrugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -85,6 +124,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InteractionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -99,25 +145,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/verify-drug': {
+      id: '/api/verify-drug'
+      path: '/api/verify-drug'
+      fullPath: '/api/verify-drug'
+      preLoaderRoute: typeof ApiVerifyDrugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  FeaturesRoute: FeaturesRoute,
   InteractionsRoute: InteractionsRoute,
   PharmaciesRoute: PharmaciesRoute,
+  ApiVerifyDrugRoute: ApiVerifyDrugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
