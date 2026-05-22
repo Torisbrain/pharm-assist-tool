@@ -67,7 +67,8 @@ async function fetchNearbyPharmacies(lat: number, lng: number, radius = 5000): P
   const data = await res.json();
   if (!data.elements?.length) return [];
 
-  return data.elements.map((p: any) => ({
+  interface OSMNode { id: number; lat: number; lon: number; tags?: Record<string, string>; }
+return (data.elements as OSMNode[]).map((p) => ({
     id: String(p.id),
     name: p.tags?.name || "Pharmacy",
     address: [
@@ -80,7 +81,7 @@ async function fetchNearbyPharmacies(lat: number, lng: number, radius = 5000): P
     stock: "In Stock" as StockStatus,
     lat: p.lat,
     lng: p.lon,
-  })).sort((a: Pharmacy, b: Pharmacy) => a.distanceKm - b.distanceKm);
+  })).sort((a, b) => a.distanceKm - b.distanceKm);
 }
 
 function GoogleMap({ pharmacies, userLat, userLng }: { pharmacies: Pharmacy[], userLat: number, userLng: number }) {
