@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PharmaciesRouteImport } from './routes/pharmacies'
 import { Route as InteractionsRouteImport } from './routes/interactions'
+import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const PharmaciesRoute = PharmaciesRouteImport.update({
 const InteractionsRoute = InteractionsRouteImport.update({
   id: '/interactions',
   path: '/interactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
 }
@@ -51,20 +59,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/interactions' | '/pharmacies'
+  fullPaths: '/' | '/dashboard' | '/features' | '/interactions' | '/pharmacies'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/interactions' | '/pharmacies'
-  id: '__root__' | '/' | '/dashboard' | '/interactions' | '/pharmacies'
+  to: '/' | '/dashboard' | '/features' | '/interactions' | '/pharmacies'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/features'
+    | '/interactions'
+    | '/pharmacies'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  FeaturesRoute: typeof FeaturesRoute
   InteractionsRoute: typeof InteractionsRoute
   PharmaciesRoute: typeof PharmaciesRoute
 }
@@ -83,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/interactions'
       fullPath: '/interactions'
       preLoaderRoute: typeof InteractionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -105,6 +128,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  FeaturesRoute: FeaturesRoute,
   InteractionsRoute: InteractionsRoute,
   PharmaciesRoute: PharmaciesRoute,
 }
