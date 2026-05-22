@@ -249,9 +249,19 @@ function Index() {
                 </p>
               )}
               {result.status === "Unknown" && (
-                <p className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-700">
-                  ⚠️ This drug was not found in our database. Exercise caution and consult a pharmacist.
-                </p>
+                <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-700">
+                  <p className="mb-2">
+                    ⚠️ This drug was not found in our database. Search the official NAFDAC Greenbook to double-check before use.
+                  </p>
+                  <a
+                    href={`https://greenbook.nafdac.gov.ng/?search=${encodeURIComponent(query || result.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-yellow-600 px-3 py-1.5 font-medium text-white hover:bg-yellow-700"
+                  >
+                    Search NAFDAC Greenbook <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                </div>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
                 AI-assisted results. Not a substitute for professional medical advice.
