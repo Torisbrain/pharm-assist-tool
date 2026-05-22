@@ -1,21 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  MapPin, Phone, Search, Package,
-  PackageX, PackageMinus, Loader2, Navigation
+  MapPin, Phone, Search, Package, Loader2, Navigation, Star,
 } from "lucide-react";
-
-type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
 
 interface Pharmacy {
   id: string;
   name: string;
   address: string;
   phone: string;
-  distanceKm: number;
-  stock: StockStatus;
   lat: number;
   lng: number;
+  distanceKm: number | null;
+  rating: number | null;
+  ratingCount: number;
+  status: string;
 }
 
 type Sp = { q?: string };
@@ -30,122 +29,140 @@ export const Route = createFileRoute("/pharmacies")({
       { title: "Pharmacy Locator — PharmVerify NG" },
       {
         name: "description",
-        content: "Find nearby Nigerian pharmacies that stock your medication with Google Maps.",
+        content: "Find real Nigerian pharmacies near you with Google Maps and Places.",
       },
     ],
   }),
 });
 
-function stockBadge(s: StockStatus) {
-  switch (s) {
-    case "In Stock":
-      return { Icon: Package, classes: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-    case "Low Stock":
-      return { Icon: PackageMinus, classes: "bg-amber-50 text-amber-700 border-amber-200" };
-    case "Out of Stock":
-      return { Icon: PackageX, classes: "bg-red-50 text-red-700 border-red-200" };
+const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
+const TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as string | undefined;
+
+declare global {
+  interface Window {
+    google?: any;
+    __pvInitMap?: () => void;
+    __pvMapReady?: boolean;
   }
 }
 
-function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2;
-  return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
-}
+let mapsLoadingPromise: Promise<void> | null = null;
 
-async function fetchNearbyPharmacies(lat: number, lng: number, radius = 5000): Promise<Pharmacy[]> {
-  const query = `[out:json][timeout:15];node["amenity"="pharmacy"](around:${radius},${lat},${lng});out body 10;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: query,
-    headers: { "Content-Type": "text/plain" },
+function loadGoogleMaps(): Promise<void> {
+  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
+  if (window.__pvMapReady && window.google?.maps) return Promise.resolve();
+  if (mapsLoadingPromise) return mapsLoadingPromise;
+  if (!BROWSER_KEY) return Promise.reject(new Error("Missing Google Maps browser key"));
+
+  mapsLoadingPromise = new Promise((resolve, reject) => {
+    window.__pvInitMap = () => {
+      window.__pvMapReady = true;
+      resolve();
+    };
+    const s = document.createElement("script");
+    const channel = TRACKING_ID ? `&channel=${TRACKING_ID}` : "";
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_KEY}&loading=async&callback=__pvInitMap${channel}`;
+    s.async = true;
+    s.defer = true;
+    s.onerror = () => reject(new Error("Failed to load Google Maps"));
+    document.head.appendChild(s);
   });
-  const data = await res.json();
-  if (!data.elements?.length) return [];
-
-  interface OSMNode { id: number; lat: number; lon: number; tags?: Record<string, string>; }
-return (data.elements as OSMNode[]).map((p) => ({
-    id: String(p.id),
-    name: p.tags?.name || "Pharmacy",
-    address: [
-      p.tags?.["addr:housenumber"],
-      p.tags?.["addr:street"],
-      p.tags?.["addr:city"] || p.tags?.["addr:state"],
-    ].filter(Boolean).join(", ") || "Address not listed",
-    phone: p.tags?.phone || p.tags?.["contact:phone"] || "Not listed",
-    distanceKm: calcDistance(lat, lng, p.lat, p.lon),
-    stock: "In Stock" as StockStatus,
-    lat: p.lat,
-    lng: p.lon,
-  })).sort((a, b) => a.distanceKm - b.distanceKm);
+  return mapsLoadingPromise;
 }
 
-function GoogleMap({ pharmacies, userLat, userLng }: { pharmacies: Pharmacy[], userLat: number, userLng: number }) {
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+}
+
+function GMap({
+  pharmacies,
+  center,
+  userLocation,
+}: {
+  pharmacies: Pharmacy[];
+  center: { lat: number; lng: number };
+  userLocation: { lat: number; lng: number } | null;
+}) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<any>(null);
+  const mapInstance = useRef<any>(null);
+  const markers = useRef<any[]>([]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    let cancelled = false;
+    loadGoogleMaps()
+      .then(() => {
+        if (cancelled || !mapRef.current || !window.google) return;
+        if (!mapInstance.current) {
+          mapInstance.current = new window.google.maps.Map(mapRef.current, {
+            zoom: 13,
+            center,
+            mapTypeControl: false,
+            streetViewControl: false,
+          });
+        } else {
+          mapInstance.current.setCenter(center);
+        }
 
-    // Check if Google Maps is loaded
-    const w = window as unknown as { google?: any };
-    if (!w.google) {
-      console.warn("Google Maps API not loaded. Add your API key to environment variables.");
-      return;
-    }
+        // Clear existing markers
+        markers.current.forEach((m) => m.setMap(null));
+        markers.current = [];
 
-    const google = w.google;
-    const mapInstance = new google.maps.Map(mapRef.current, {
-      zoom: 14,
-      center: { lat: userLat, lng: userLng },
-      mapTypeId: "roadmap",
-    });
+        const google = window.google;
+        const bounds = new google.maps.LatLngBounds();
 
-    setMap(mapInstance);
+        if (userLocation) {
+          const userMarker = new google.maps.Marker({
+            position: userLocation,
+            map: mapInstance.current,
+            title: "Your location",
+            icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          });
+          markers.current.push(userMarker);
+          bounds.extend(userLocation);
+        }
 
-    // Add user location marker
-    new google.maps.Marker({
-      position: { lat: userLat, lng: userLng },
-      map: mapInstance,
-      title: "Your Location",
-      icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-    });
+        pharmacies.forEach((p) => {
+          if (!p.lat || !p.lng) return;
+          const marker = new google.maps.Marker({
+            position: { lat: p.lat, lng: p.lng },
+            map: mapInstance.current,
+            title: p.name,
+          });
+          const info = new google.maps.InfoWindow({
+            content: `
+              <div style="font-family: system-ui; padding: 4px; max-width: 240px;">
+                <div style="font-weight:600; margin-bottom:4px;">${p.name}</div>
+                <div style="font-size:12px; color:#555;">${p.address}</div>
+                ${p.phone !== "Not listed" ? `<div style="font-size:12px; color:#555; margin-top:4px;">📞 ${p.phone}</div>` : ""}
+                ${p.rating ? `<div style="font-size:12px; margin-top:4px;">⭐ ${p.rating} (${p.ratingCount})</div>` : ""}
+              </div>
+            `,
+          });
+          marker.addListener("click", () => info.open(mapInstance.current, marker));
+          markers.current.push(marker);
+          bounds.extend({ lat: p.lat, lng: p.lng });
+        });
 
-    // Add pharmacy markers
-    pharmacies.forEach((pharmacy) => {
-      const marker = new google.maps.Marker({
-        position: { lat: pharmacy.lat, lng: pharmacy.lng },
-        map: mapInstance,
-        title: pharmacy.name,
-      });
+        if (!bounds.isEmpty() && (pharmacies.length > 0 || userLocation)) {
+          mapInstance.current.fitBounds(bounds, 60);
+        }
+      })
+      .catch((e) => console.error("Maps load error:", e));
 
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <div className="p-2">
-            <h3 className="font-semibold">${pharmacy.name}</h3>
-            <p className="text-xs text-gray-600">${pharmacy.address}</p>
-            <p className="text-xs text-gray-600">${pharmacy.phone}</p>
-            <p className="text-xs font-medium">${pharmacy.distanceKm} km away</p>
-          </div>
-        `,
-      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pharmacies, center, userLocation]);
 
-      marker.addListener("click", () => {
-        infoWindow.open(mapInstance, marker);
-      });
-    });
-  }, [pharmacies, userLat, userLng]);
-
-  return (
-    <div
-      ref={mapRef}
-      className="h-96 w-full rounded-lg border border-border bg-muted"
-    />
-  );
+  return <div ref={mapRef} className="h-[420px] w-full rounded-lg border border-border bg-muted" />;
 }
 
 function PharmaciesPage() {
@@ -154,166 +171,190 @@ function PharmaciesPage() {
   const [results, setResults] = useState<Pharmacy[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [locError, setLocError] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 9.082, lng: 8.6753 }); // Nigeria
 
-  const findNearby = () => {
-    setLoading(true);
-    setLocError("");
-    setMessage("");
-    setSearched(false);
+  const runSearch = useCallback(
+    async (opts: { lat?: number; lng?: number; query?: string }) => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch("/api/pharmacies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...opts, radius: 8000 }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Search failed");
 
-    if (!navigator.geolocation) {
-      setLocError("Location not supported on this device.");
-      setLoading(false);
-      return;
-    }
+        const pharmacies: Pharmacy[] = (data.places ?? []).map((p: Pharmacy) => ({
+          ...p,
+          distanceKm:
+            opts.lat != null && opts.lng != null && p.lat && p.lng
+              ? haversine(opts.lat, opts.lng, p.lat, p.lng)
+              : null,
+        }));
+        pharmacies.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
+        setResults(pharmacies);
+        setSearched(true);
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-
-        try {
-          let pharmacies = await fetchNearbyPharmacies(latitude, longitude, 5000);
-          if (pharmacies.length === 0) {
-            pharmacies = await fetchNearbyPharmacies(latitude, longitude, 10000);
-          }
-          if (pharmacies.length === 0) {
-            setMessage("No pharmacies found within 10km. Try visiting nafdac.gov.ng for listings in your state.");
-          }
-          setResults(pharmacies);
-          setSearched(true);
-        } catch {
-          setLocError("Could not load pharmacies. Please try again.");
-        } finally {
-          setLoading(false);
+        if (pharmacies.length > 0) {
+          setCenter(
+            opts.lat != null && opts.lng != null
+              ? { lat: opts.lat, lng: opts.lng }
+              : { lat: pharmacies[0].lat, lng: pharmacies[0].lng }
+          );
         }
-      },
-      () => {
-        setLocError("Please allow location access in your browser to find nearby pharmacies.");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Search failed");
+      } finally {
         setLoading(false);
       }
+    },
+    []
+  );
+
+  const findNearby = () => {
+    setError("");
+    if (!navigator.geolocation) {
+      setError("Location not supported. Try searching by city instead.");
+      return;
+    }
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        runSearch({ lat: loc.lat, lng: loc.lng, query: query.trim() || undefined });
+      },
+      () => {
+        setLoading(false);
+        setError("Location access denied. Try searching by city name.");
+      },
+      { timeout: 10000 }
     );
   };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    findNearby();
+    if (!query.trim()) {
+      findNearby();
+      return;
+    }
+    runSearch({ query: query.trim() });
   };
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Pharmacy Locator
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Pharmacy Locator</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Find real pharmacies near you across all 36 Nigerian states and Africa.
-            Allow location access for the best results.
+            Find real pharmacies near you across Nigeria — powered by Google Places.
+            Search by city (e.g. <em>Lagos</em>, <em>Abuja</em>, <em>Ibadan</em>) or use your location.
           </p>
         </header>
 
-        <form onSubmit={onSubmit} className="flex gap-2">
+        <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. Coartem, Amoxil 500mg…"
+              placeholder="City or area (e.g. Lekki, Wuse 2, Enugu)…"
               className="w-full rounded-md border border-input bg-background py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-70"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            Search
+          </button>
+          <button
             type="button"
             onClick={findNearby}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-70"
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
           >
-            {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Finding...</>
-            ) : (
-              <><Navigation className="h-4 w-4" /> Find Near Me</>
-            )}
+            <Navigation className="h-4 w-4" /> Near me
           </button>
         </form>
 
-        {locError && (
+        {error && (
           <p className="mt-3 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-700">
-            ⚠️ {locError}
+            ⚠️ {error}
           </p>
         )}
 
         {searched && (
           <section className="mt-8 space-y-6" aria-live="polite">
-            {userLocation && results.length > 0 && (
+            {results.length > 0 && (
               <div className="rounded-lg border border-border bg-card p-4">
                 <h2 className="mb-3 text-lg font-semibold text-card-foreground">
-                  Pharmacies Near You
+                  {results.length} pharmac{results.length === 1 ? "y" : "ies"} found
                 </h2>
-                <GoogleMap 
-                  pharmacies={results} 
-                  userLat={userLocation.lat} 
-                  userLng={userLocation.lng} 
-                />
+                <GMap pharmacies={results} center={center} userLocation={userLocation} />
               </div>
             )}
 
-            {message && (
+            {results.length === 0 && !loading && (
               <p className="rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
-                {message}
+                No pharmacies found. Try a different city or area.
               </p>
             )}
 
             <div className="space-y-3">
-              {results.map((p) => {
-                const { Icon, classes } = stockBadge(p.stock);
-                return (
-                  <article
-                    key={p.id}
-                    className="rounded-lg border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h2 className="text-base font-semibold text-card-foreground">{p.name}</h2>
-                        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <MapPin className="h-3.5 w-3.5" /> {p.address}
-                        </p>
+              {results.map((p) => (
+                <article
+                  key={p.id}
+                  className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-base font-semibold text-card-foreground">{p.name}</h3>
+                      <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {p.address}
+                      </p>
+                      {p.phone !== "Not listed" && (
                         <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                           <Phone className="h-3.5 w-3.5" />
-                          {p.phone !== "Not listed" ? (
-                            <a href={`tel:${p.phone}`} className="hover:text-primary hover:underline">
-                              {p.phone}
-                            </a>
-                          ) : (
-                            p.phone
-                          )}
+                          <a href={`tel:${p.phone}`} className="hover:text-primary hover:underline">
+                            {p.phone}
+                          </a>
                         </p>
-                      </div>
-                      <div className="text-right">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${classes}`}>
-                          <Icon className="h-3.5 w-3.5" />
-                          {p.stock}
-                        </span>
-                        <p className="mt-2 text-sm font-medium text-foreground">
-                          {p.distanceKm} km away
+                      )}
+                      {p.rating != null && (
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          {p.rating} ({p.ratingCount} reviews)
                         </p>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex text-xs text-primary hover:underline"
-                        >
-                          Get directions →
-                        </a>
-                      </div>
+                      )}
                     </div>
-                  </article>
-                );
-              })}
+                    <div className="text-right">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                        <Package className="h-3.5 w-3.5" />
+                        {p.status === "OPERATIONAL" ? "Open" : p.status}
+                      </span>
+                      {p.distanceKm != null && (
+                        <p className="mt-2 text-sm font-medium text-foreground">{p.distanceKm} km</p>
+                      )}
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}&query_place_id=${p.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex text-xs text-primary hover:underline"
+                      >
+                        Directions →
+                      </a>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
           </section>
         )}
