@@ -201,6 +201,14 @@ function PharmaciesPage() {
   const [error, setError] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 9.082, lng: 8.6753 }); // Nigeria
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId(id);
+    const el = cardRefs.current[id];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
 
   const runSearch = useCallback(
     async (opts: { lat?: number; lng?: number; query?: string }) => {
