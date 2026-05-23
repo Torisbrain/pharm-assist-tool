@@ -333,7 +333,7 @@ function PharmaciesPage() {
                 <h2 className="mb-3 text-lg font-semibold text-card-foreground">
                   {results.length} pharmac{results.length === 1 ? "y" : "ies"} found
                 </h2>
-                <GMap pharmacies={results} center={center} userLocation={userLocation} />
+                <GMap pharmacies={results} center={center} userLocation={userLocation} selectedId={selectedId} onSelect={handleSelect} />
               </div>
             )}
 
