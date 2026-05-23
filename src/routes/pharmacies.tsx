@@ -390,6 +390,7 @@ function PharmaciesPage() {
                         href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}&query_place_id=${p.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="mt-2 inline-flex text-xs text-primary hover:underline"
                       >
                         Directions →
@@ -397,7 +398,8 @@ function PharmaciesPage() {
                     </div>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
