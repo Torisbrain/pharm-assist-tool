@@ -40,7 +40,7 @@ const TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_
 
 declare global {
   interface Window {
-    google?: any;
+    google?: typeof google;
     __pvInitMap?: () => void;
     __pvMapReady?: boolean;
   }
@@ -82,6 +82,19 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
+// Raw shape returned by /api/pharmacies before we compute distanceKm
+interface RawPlace {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  lat: number;
+  lng: number;
+  rating: number | null;
+  ratingCount: number;
+  status: string;
+}
+
 function GMap({
   pharmacies,
   center,
@@ -96,9 +109,13 @@ function GMap({
   onSelect: (id: string) => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstance = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markers = useRef<Record<string, any>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const infos = useRef<Record<string, any>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const openInfo = useRef<any>(null);
 
   useEffect(() => {
@@ -118,13 +135,13 @@ function GMap({
         }
 
         // Clear existing markers + infos
-        Object.values(markers.current).forEach((m: any) => m.setMap(null));
-        Object.values(infos.current).forEach((i: any) => i.close());
+        Object.values(markers.current).forEach((m) => m.setMap(null));
+        Object.values(infos.current).forEach((i) => i.close());
         markers.current = {};
         infos.current = {};
         openInfo.current = null;
 
-        const google = window.google;
+        const { google } = window;
         const bounds = new google.maps.LatLngBounds();
 
         if (userLocation) {
@@ -223,7 +240,7 @@ function PharmaciesPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Search failed");
 
-        const pharmacies: Pharmacy[] = (data.places ?? []).map((p: Pharmacy) => ({
+        const pharmacies: Pharmacy[] = (data.places ?? []).map((p: RawPlace) => ({
           ...p,
           distanceKm:
             opts.lat != null && opts.lng != null && p.lat && p.lng
