@@ -86,14 +86,20 @@ function GMap({
   pharmacies,
   center,
   userLocation,
+  selectedId,
+  onSelect,
 }: {
   pharmacies: Pharmacy[];
   center: { lat: number; lng: number };
   userLocation: { lat: number; lng: number } | null;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
-  const markers = useRef<any[]>([]);
+  const markers = useRef<Record<string, any>>({});
+  const infos = useRef<Record<string, any>>({});
+  const openInfo = useRef<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,9 +117,12 @@ function GMap({
           mapInstance.current.setCenter(center);
         }
 
-        // Clear existing markers
-        markers.current.forEach((m) => m.setMap(null));
-        markers.current = [];
+        // Clear existing markers + infos
+        Object.values(markers.current).forEach((m: any) => m.setMap(null));
+        Object.values(infos.current).forEach((i: any) => i.close());
+        markers.current = {};
+        infos.current = {};
+        openInfo.current = null;
 
         const google = window.google;
         const bounds = new google.maps.LatLngBounds();
@@ -125,7 +134,7 @@ function GMap({
             title: "Your location",
             icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
           });
-          markers.current.push(userMarker);
+          markers.current["__user"] = userMarker;
           bounds.extend(userLocation);
         }
 
@@ -146,8 +155,9 @@ function GMap({
               </div>
             `,
           });
-          marker.addListener("click", () => info.open(mapInstance.current, marker));
-          markers.current.push(marker);
+          marker.addListener("click", () => onSelect(p.id));
+          markers.current[p.id] = marker;
+          infos.current[p.id] = info;
           bounds.extend({ lat: p.lat, lng: p.lng });
         });
 
@@ -160,7 +170,24 @@ function GMap({
     return () => {
       cancelled = true;
     };
-  }, [pharmacies, center, userLocation]);
+  }, [pharmacies, center, userLocation, onSelect]);
+
+  // React to selection: open info window, bounce marker, pan to it
+  useEffect(() => {
+    if (!selectedId || !window.google || !mapInstance.current) return;
+    const marker = markers.current[selectedId];
+    const info = infos.current[selectedId];
+    if (!marker || !info) return;
+
+    if (openInfo.current && openInfo.current !== info) openInfo.current.close();
+    info.open(mapInstance.current, marker);
+    openInfo.current = info;
+
+    mapInstance.current.panTo(marker.getPosition());
+    marker.setAnimation(window.google.maps.Animation.BOUNCE);
+    const t = window.setTimeout(() => marker.setAnimation(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [selectedId, pharmacies]);
 
   return <div ref={mapRef} className="h-[420px] w-full rounded-lg border border-border bg-muted" />;
 }
