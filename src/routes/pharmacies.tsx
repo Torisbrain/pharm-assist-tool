@@ -344,10 +344,18 @@ function PharmaciesPage() {
             )}
 
             <div className="space-y-3">
-              {results.map((p) => (
+              {results.map((p) => {
+                const isSelected = selectedId === p.id;
+                return (
                 <article
                   key={p.id}
-                  className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
+                  ref={(el) => { cardRefs.current[p.id] = el; }}
+                  onClick={() => handleSelect(p.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSelect(p.id); } }}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  className={`cursor-pointer rounded-lg border bg-card p-5 shadow-sm transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring ${isSelected ? "border-primary ring-2 ring-primary/40" : "border-border"}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
