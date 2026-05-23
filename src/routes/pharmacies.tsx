@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  MapPin, Phone, Search, Package, Loader2, Navigation, Star,
+  MapPin, Phone, Search, Package, Loader2, Navigation, Star, ExternalLink,
 } from "lucide-react";
 
 interface Pharmacy {
@@ -387,13 +387,14 @@ function PharmaciesPage() {
                         <p className="mt-2 text-sm font-medium text-foreground">{p.distanceKm} km</p>
                       )}
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}&query_place_id=${p.id}`}
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="mt-2 inline-flex text-xs text-primary hover:underline"
+                        className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                       >
-                        Directions →
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Open in Google Maps
                       </a>
                     </div>
                   </div>
