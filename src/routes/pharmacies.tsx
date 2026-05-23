@@ -86,14 +86,20 @@ function GMap({
   pharmacies,
   center,
   userLocation,
+  selectedId,
+  onSelect,
 }: {
   pharmacies: Pharmacy[];
   center: { lat: number; lng: number };
   userLocation: { lat: number; lng: number } | null;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
-  const markers = useRef<any[]>([]);
+  const markers = useRef<Record<string, any>>({});
+  const infos = useRef<Record<string, any>>({});
+  const openInfo = useRef<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,9 +117,12 @@ function GMap({
           mapInstance.current.setCenter(center);
         }
 
-        // Clear existing markers
-        markers.current.forEach((m) => m.setMap(null));
-        markers.current = [];
+        // Clear existing markers + infos
+        Object.values(markers.current).forEach((m: any) => m.setMap(null));
+        Object.values(infos.current).forEach((i: any) => i.close());
+        markers.current = {};
+        infos.current = {};
+        openInfo.current = null;
 
         const google = window.google;
         const bounds = new google.maps.LatLngBounds();
@@ -125,7 +134,7 @@ function GMap({
             title: "Your location",
             icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
           });
-          markers.current.push(userMarker);
+          markers.current["__user"] = userMarker;
           bounds.extend(userLocation);
         }
 
@@ -146,8 +155,9 @@ function GMap({
               </div>
             `,
           });
-          marker.addListener("click", () => info.open(mapInstance.current, marker));
-          markers.current.push(marker);
+          marker.addListener("click", () => onSelect(p.id));
+          markers.current[p.id] = marker;
+          infos.current[p.id] = info;
           bounds.extend({ lat: p.lat, lng: p.lng });
         });
 
@@ -160,7 +170,24 @@ function GMap({
     return () => {
       cancelled = true;
     };
-  }, [pharmacies, center, userLocation]);
+  }, [pharmacies, center, userLocation, onSelect]);
+
+  // React to selection: open info window, bounce marker, pan to it
+  useEffect(() => {
+    if (!selectedId || !window.google || !mapInstance.current) return;
+    const marker = markers.current[selectedId];
+    const info = infos.current[selectedId];
+    if (!marker || !info) return;
+
+    if (openInfo.current && openInfo.current !== info) openInfo.current.close();
+    info.open(mapInstance.current, marker);
+    openInfo.current = info;
+
+    mapInstance.current.panTo(marker.getPosition());
+    marker.setAnimation(window.google.maps.Animation.BOUNCE);
+    const t = window.setTimeout(() => marker.setAnimation(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [selectedId, pharmacies]);
 
   return <div ref={mapRef} className="h-[420px] w-full rounded-lg border border-border bg-muted" />;
 }
@@ -174,6 +201,14 @@ function PharmaciesPage() {
   const [error, setError] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 9.082, lng: 8.6753 }); // Nigeria
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId(id);
+    const el = cardRefs.current[id];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
 
   const runSearch = useCallback(
     async (opts: { lat?: number; lng?: number; query?: string }) => {
@@ -298,7 +333,7 @@ function PharmaciesPage() {
                 <h2 className="mb-3 text-lg font-semibold text-card-foreground">
                   {results.length} pharmac{results.length === 1 ? "y" : "ies"} found
                 </h2>
-                <GMap pharmacies={results} center={center} userLocation={userLocation} />
+                <GMap pharmacies={results} center={center} userLocation={userLocation} selectedId={selectedId} onSelect={handleSelect} />
               </div>
             )}
 
@@ -309,10 +344,18 @@ function PharmaciesPage() {
             )}
 
             <div className="space-y-3">
-              {results.map((p) => (
+              {results.map((p) => {
+                const isSelected = selectedId === p.id;
+                return (
                 <article
                   key={p.id}
-                  className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
+                  ref={(el) => { cardRefs.current[p.id] = el; }}
+                  onClick={() => handleSelect(p.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSelect(p.id); } }}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  className={`cursor-pointer rounded-lg border bg-card p-5 shadow-sm transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring ${isSelected ? "border-primary ring-2 ring-primary/40" : "border-border"}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -347,6 +390,7 @@ function PharmaciesPage() {
                         href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}&query_place_id=${p.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="mt-2 inline-flex text-xs text-primary hover:underline"
                       >
                         Directions →
@@ -354,7 +398,8 @@ function PharmaciesPage() {
                     </div>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
