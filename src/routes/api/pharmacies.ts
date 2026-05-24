@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
+const GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places";
 
 interface PlaceResult {
   id: string;
@@ -15,15 +15,9 @@ interface PlaceResult {
 }
 
 const FIELD_MASK = [
-  "places.id",
-  "places.displayName",
-  "places.formattedAddress",
-  "places.location",
-  "places.nationalPhoneNumber",
-  "places.internationalPhoneNumber",
-  "places.businessStatus",
-  "places.rating",
-  "places.userRatingCount",
+  "places.id","places.displayName","places.formattedAddress","places.location",
+  "places.nationalPhoneNumber","places.internationalPhoneNumber",
+  "places.businessStatus","places.rating","places.userRatingCount",
 ].join(",");
 
 function corsHeaders() {
@@ -46,9 +40,7 @@ export const Route = createFileRoute("/api/pharmacies")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders() }),
       POST: async ({ request }) => {
-        const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
         const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-        if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY missing" }, 500);
         if (!GOOGLE_MAPS_API_KEY) return json({ error: "GOOGLE_MAPS_API_KEY missing" }, 500);
 
         let body: { lat?: number; lng?: number; query?: string; radius?: number };
@@ -58,63 +50,38 @@ export const Route = createFileRoute("/api/pharmacies")({
         const hasCoords = typeof body.lat === "number" && typeof body.lng === "number";
         const query = (body.query ?? "").trim();
 
+        const headers = {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+          "X-Goog-FieldMask": FIELD_MASK,
+        };
+
         try {
           let res: Response;
           if (hasCoords && !query) {
-            // Nearby search
-            res = await fetch(`${GATEWAY_URL}/places/v1/places:searchNearby`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "X-Connection-Api-Key": GOOGLE_MAPS_API_KEY,
-                "Content-Type": "application/json",
-                "X-Goog-FieldMask": FIELD_MASK,
-              },
+            res = await fetch(`${GOOGLE_PLACES_URL}:searchNearby`, {
+              method: "POST", headers,
               body: JSON.stringify({
                 includedTypes: ["pharmacy", "drugstore"],
                 maxResultCount: 15,
                 locationRestriction: {
-                  circle: {
-                    center: { latitude: body.lat, longitude: body.lng },
-                    radius,
-                  },
+                  circle: { center: { latitude: body.lat, longitude: body.lng }, radius },
                 },
               }),
             });
           } else {
-            // Text search — restrict to Nigeria
-            const textQuery = query
-              ? `pharmacy in ${query}, Nigeria`
-              : "pharmacy in Nigeria";
-            const payload: Record<string, unknown> = {
-              textQuery,
-              maxResultCount: 15,
-              regionCode: "NG",
-            };
+            const textQuery = query ? `pharmacy in ${query}, Nigeria` : "pharmacy in Nigeria";
+            const payload: Record<string, unknown> = { textQuery, maxResultCount: 15, regionCode: "NG" };
             if (hasCoords) {
-              payload.locationBias = {
-                circle: {
-                  center: { latitude: body.lat, longitude: body.lng },
-                  radius,
-                },
-              };
+              payload.locationBias = { circle: { center: { latitude: body.lat, longitude: body.lng }, radius } };
             }
-            res = await fetch(`${GATEWAY_URL}/places/v1/places:searchText`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "X-Connection-Api-Key": GOOGLE_MAPS_API_KEY,
-                "Content-Type": "application/json",
-                "X-Goog-FieldMask": FIELD_MASK,
-              },
-              body: JSON.stringify(payload),
+            res = await fetch(`${GOOGLE_PLACES_URL}:searchText`, {
+              method: "POST", headers, body: JSON.stringify(payload),
             });
           }
 
           const text = await res.text();
-          if (!res.ok) {
-            return json({ error: `Places API ${res.status}: ${text}` }, 502);
-          }
+          if (!res.ok) return json({ error: `Places API ${res.status}: ${text}` }, 502);
           const data = JSON.parse(text) as { places?: PlaceResult[] };
           const places = (data.places ?? []).map((p) => ({
             id: p.id,
