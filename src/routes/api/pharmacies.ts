@@ -62,11 +62,11 @@ export const Route = createFileRoute("/api/pharmacies")({
               out center 20;
             `;
           } else {
-            // Search by city name in Nigeria
+            // Search by city name in Nigeria (Fix: Unquoted 'i' flag for case-insensitivity)
             const area = query || "Nigeria";
             overpassQuery = `
               [out:json][timeout:25];
-              area["name"~"${area}","i"]["boundary"="administrative"]->.searchArea;
+              area["name"~"${area}",i]["boundary"="administrative"]->.searchArea;
               (
                 node["amenity"="pharmacy"](area.searchArea);
                 way["amenity"="pharmacy"](area.searchArea);
