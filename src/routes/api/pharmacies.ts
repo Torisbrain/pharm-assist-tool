@@ -1,5 +1,4 @@
-python3 << 'PYEOF'
-code = '''import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 function corsHeaders() {
   return {
@@ -125,11 +124,3 @@ export const Route = createFileRoute("/api/pharmacies")({
     },
   },
 });
-'''
-open('src/routes/api/pharmacies.ts', 'w').write(code)
-print("Done")
-PYEOF
-
-git add src/routes/api/pharmacies.ts
-git commit -m "fix: normalize lat/lon coordinates for both OSM node and way element types"
-git push
