@@ -28,10 +28,12 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
-interface OSMNode {
+interface OSMElement {
   id: number;
-  lat: number;
-  lon: number;
+  type: "node" | "way";
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
   tags?: Record<string, string>;
 }
 
@@ -84,10 +86,15 @@ export const Route = createFileRoute("/api/pharmacies")({
             return json({ error: "Overpass API error" }, 502);
           }
 
-          const data = await res.json() as { elements: OSMNode[] };
+          const data = await res.json() as { elements: OSMElement[] };
 
-          const places = (data.elements as OSMNode[])
-            .filter((e) => e.lat && e.lon)
+          const places = data.elements
+            .map((e) => ({
+              ...e,
+              calculatedLat: e.lat ?? e.center?.lat,
+              calculatedLon: e.lon ?? e.center?.lon,
+            }))
+            .filter((e) => e.calculatedLat && e.calculatedLon)
             .map((e) => ({
               id: String(e.id),
               name: e.tags?.name ?? e.tags?.["name:en"] ?? "Pharmacy",
@@ -98,14 +105,14 @@ export const Route = createFileRoute("/api/pharmacies")({
                 e.tags?.["addr:state"],
               ].filter(Boolean).join(", ") || e.tags?.["addr:full"] || "Address not listed",
               phone: e.tags?.phone ?? e.tags?.["contact:phone"] ?? "Not listed",
-              lat: e.lat,
-              lng: e.lon,
+              lat: e.calculatedLat!,
+              lng: e.calculatedLon!,
               rating: null,
               ratingCount: 0,
               status: "OPERATIONAL",
               distanceKm:
                 hasCoords && body.lat && body.lng
-                  ? haversine(body.lat, body.lng, e.lat, e.lon)
+                  ? haversine(body.lat, body.lng, e.calculatedLat!, e.calculatedLon!)
                   : null,
             }))
             .sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
@@ -124,5 +131,5 @@ print("Done")
 PYEOF
 
 git add src/routes/api/pharmacies.ts
-git commit -m "feat: switch pharmacy search to OpenStreetMap/Overpass (free, no billing)"
+git commit -m "fix: normalize lat/lon coordinates for both OSM node and way element types"
 git push
