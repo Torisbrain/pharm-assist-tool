@@ -62,11 +62,12 @@ export const Route = createFileRoute("/api/pharmacies")({
               out center 20;
             `;
           } else {
-            // Search by city name in Nigeria (Fix: Unquoted 'i' flag for case-insensitivity)
-            const area = query || "Nigeria";
+            // Extract just the city — take last word(s) as location (handles mixed queries like "CUREFENAC PORT HARCOURT")
+            const cityPart = query ? query.split(" ").slice(-2).join(" ") : "Nigeria";
+
             overpassQuery = `
               [out:json][timeout:25];
-              area["name"~"${area}",i]["boundary"="administrative"]->.searchArea;
+              area["name"~"${cityPart}",i]["boundary"="administrative"]->.searchArea;
               (
                 node["amenity"="pharmacy"](area.searchArea);
                 way["amenity"="pharmacy"](area.searchArea);
