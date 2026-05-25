@@ -9,14 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as PharmacyPortalRouteImport } from './routes/pharmacy-portal'
 import { Route as PharmaciesRouteImport } from './routes/pharmacies'
 import { Route as InteractionsRouteImport } from './routes/interactions'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiVerifyDrugRouteImport } from './routes/api/verify-drug'
+import { Route as ApiReportDrugRouteImport } from './routes/api/report-drug'
 import { Route as ApiPharmaciesRouteImport } from './routes/api/pharmacies'
+import { Route as ApiAdminReportsRouteImport } from './routes/api/admin/reports'
 
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PharmacyPortalRoute = PharmacyPortalRouteImport.update({
+  id: '/pharmacy-portal',
+  path: '/pharmacy-portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PharmaciesRoute = PharmaciesRouteImport.update({
   id: '/pharmacies',
   path: '/pharmacies',
@@ -37,6 +52,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -47,82 +67,141 @@ const ApiVerifyDrugRoute = ApiVerifyDrugRouteImport.update({
   path: '/api/verify-drug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiReportDrugRoute = ApiReportDrugRouteImport.update({
+  id: '/api/report-drug',
+  path: '/api/report-drug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPharmaciesRoute = ApiPharmaciesRouteImport.update({
   id: '/api/pharmacies',
   path: '/api/pharmacies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
+  id: '/api/admin/reports',
+  path: '/api/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
+  '/pharmacy-portal': typeof PharmacyPortalRoute
+  '/report': typeof ReportRoute
   '/api/pharmacies': typeof ApiPharmaciesRoute
+  '/api/report-drug': typeof ApiReportDrugRoute
   '/api/verify-drug': typeof ApiVerifyDrugRoute
+  '/api/admin/reports': typeof ApiAdminReportsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
+  '/pharmacy-portal': typeof PharmacyPortalRoute
+  '/report': typeof ReportRoute
   '/api/pharmacies': typeof ApiPharmaciesRoute
+  '/api/report-drug': typeof ApiReportDrugRoute
   '/api/verify-drug': typeof ApiVerifyDrugRoute
+  '/api/admin/reports': typeof ApiAdminReportsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
+  '/pharmacy-portal': typeof PharmacyPortalRoute
+  '/report': typeof ReportRoute
   '/api/pharmacies': typeof ApiPharmaciesRoute
+  '/api/report-drug': typeof ApiReportDrugRoute
   '/api/verify-drug': typeof ApiVerifyDrugRoute
+  '/api/admin/reports': typeof ApiAdminReportsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/dashboard'
     | '/features'
     | '/interactions'
     | '/pharmacies'
+    | '/pharmacy-portal'
+    | '/report'
     | '/api/pharmacies'
+    | '/api/report-drug'
     | '/api/verify-drug'
+    | '/api/admin/reports'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/dashboard'
     | '/features'
     | '/interactions'
     | '/pharmacies'
+    | '/pharmacy-portal'
+    | '/report'
     | '/api/pharmacies'
+    | '/api/report-drug'
     | '/api/verify-drug'
+    | '/api/admin/reports'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/dashboard'
     | '/features'
     | '/interactions'
     | '/pharmacies'
+    | '/pharmacy-portal'
+    | '/report'
     | '/api/pharmacies'
+    | '/api/report-drug'
     | '/api/verify-drug'
+    | '/api/admin/reports'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRoute
   FeaturesRoute: typeof FeaturesRoute
   InteractionsRoute: typeof InteractionsRoute
   PharmaciesRoute: typeof PharmaciesRoute
+  PharmacyPortalRoute: typeof PharmacyPortalRoute
+  ReportRoute: typeof ReportRoute
   ApiPharmaciesRoute: typeof ApiPharmaciesRoute
+  ApiReportDrugRoute: typeof ApiReportDrugRoute
   ApiVerifyDrugRoute: typeof ApiVerifyDrugRoute
+  ApiAdminReportsRoute: typeof ApiAdminReportsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pharmacy-portal': {
+      id: '/pharmacy-portal'
+      path: '/pharmacy-portal'
+      fullPath: '/pharmacy-portal'
+      preLoaderRoute: typeof PharmacyPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pharmacies': {
       id: '/pharmacies'
       path: '/pharmacies'
@@ -151,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -165,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVerifyDrugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/report-drug': {
+      id: '/api/report-drug'
+      path: '/api/report-drug'
+      fullPath: '/api/report-drug'
+      preLoaderRoute: typeof ApiReportDrugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/pharmacies': {
       id: '/api/pharmacies'
       path: '/api/pharmacies'
@@ -172,17 +265,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPharmaciesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/reports': {
+      id: '/api/admin/reports'
+      path: '/api/admin/reports'
+      fullPath: '/api/admin/reports'
+      preLoaderRoute: typeof ApiAdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   DashboardRoute: DashboardRoute,
   FeaturesRoute: FeaturesRoute,
   InteractionsRoute: InteractionsRoute,
   PharmaciesRoute: PharmaciesRoute,
+  PharmacyPortalRoute: PharmacyPortalRoute,
+  ReportRoute: ReportRoute,
   ApiPharmaciesRoute: ApiPharmaciesRoute,
+  ApiReportDrugRoute: ApiReportDrugRoute,
   ApiVerifyDrugRoute: ApiVerifyDrugRoute,
+  ApiAdminReportsRoute: ApiAdminReportsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

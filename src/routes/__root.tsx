@@ -129,8 +129,10 @@ function NavBar() {
     { to: "/", label: "Verify Drug" },
     { to: "/interactions", label: "Interactions" },
     { to: "/pharmacies", label: "Pharmacies" },
-    { to: "/dashboard", label: "User Dashboard" },
+    { to: "/report", label: "Report" },
+    { to: "/dashboard", label: "Dashboard" },
     { to: "/pharmacy-portal", label: "Pharmacy Portal" },
+    { to: "/admin", label: "Admin" },
   ] as const;
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">

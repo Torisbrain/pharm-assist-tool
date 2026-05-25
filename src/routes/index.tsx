@@ -241,6 +241,13 @@ function Index() {
                 >
                   Find this drug nearby <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
+                <Link
+                  to="/report"
+                  search={{ drugName: result.name, nafdac: result.nafdacNumber }}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:underline"
+                >
+                  Report suspicious product <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
 
               {result.status === "Flagged" && (
