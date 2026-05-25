@@ -42,39 +42,58 @@ export const Route = createFileRoute("/api/pharmacies")({
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders() }),
       POST: async ({ request }) => {
         let body: { lat?: number; lng?: number; query?: string; radius?: number };
-        try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+        try {
+          body = await request.json();
+        } catch {
+          return json({ error: "Invalid JSON" }, 400);
+        }
 
+        let searchLat = body.lat;
+        let searchLng = body.lng;
         const radius = Math.min(Math.max(body.radius ?? 8000, 500), 50000);
-        const hasCoords = typeof body.lat === "number" && typeof body.lng === "number";
         const query = (body.query ?? "").trim();
 
         try {
-          let overpassQuery = "";
-
-          if (hasCoords && !query) {
-            // Search by coordinates
-            overpassQuery = `
-              [out:json][timeout:25];
-              (
-                node["amenity"="pharmacy"](around:${radius},${body.lat},${body.lng});
-                way["amenity"="pharmacy"](around:${radius},${body.lat},${body.lng});
-              );
-              out center 20;
-            `;
-          } else {
-            // Extract just the city — take last word(s) as location (handles mixed queries like "CUREFENAC PORT HARCOURT")
-            const cityPart = query ? query.split(" ").slice(-2).join(" ") : "Nigeria";
-
-            overpassQuery = `
-              [out:json][timeout:25];
-              area["name"~"${cityPart}",i]["boundary"="administrative"]->.searchArea;
-              (
-                node["amenity"="pharmacy"](area.searchArea);
-                way["amenity"="pharmacy"](area.searchArea);
-              );
-              out center 20;
-            `;
+          // 1. Geocode if query is provided and no coordinates
+          if (query && (typeof searchLat !== "number" || typeof searchLng !== "number")) {
+            const geoRes = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+                query + ", Nigeria"
+              )}&format=json&limit=1`,
+              {
+                headers: {
+                  "User-Agent": "PharmVerify-NG/1.0",
+                },
+              }
+            );
+            if (geoRes.ok) {
+              const geoData = (await geoRes.json()) as any[];
+              if (geoData.length > 0) {
+                searchLat = parseFloat(geoData[0].lat);
+                searchLng = parseFloat(geoData[0].lon);
+              } else {
+                return json({ error: "Location not found" }, 404);
+              }
+            } else {
+              return json({ error: "Geocoding service unavailable" }, 502);
+            }
           }
+
+          if (typeof searchLat !== "number" || typeof searchLng !== "number") {
+             // Default to Lagos if still no coordinates and no query
+             searchLat = 6.4550575;
+             searchLng = 3.3941795;
+          }
+
+          // 2. Search by coordinates using Overpass API
+          const overpassQuery = `
+            [out:json][timeout:25];
+            (
+              node["amenity"="pharmacy"](around:${radius},${searchLat},${searchLng});
+              way["amenity"="pharmacy"](around:${radius},${searchLat},${searchLng});
+            );
+            out center 20;
+          `;
 
           const res = await fetch("https://overpass-api.de/api/interpreter", {
             method: "POST",
@@ -86,7 +105,7 @@ export const Route = createFileRoute("/api/pharmacies")({
             return json({ error: "Overpass API error" }, 502);
           }
 
-          const data = await res.json() as { elements: OSMElement[] };
+          const data = (await res.json()) as { elements: OSMElement[] };
 
           const places = data.elements
             .map((e) => ({
@@ -98,26 +117,31 @@ export const Route = createFileRoute("/api/pharmacies")({
             .map((e) => ({
               id: String(e.id),
               name: e.tags?.name ?? e.tags?.["name:en"] ?? "Pharmacy",
-              address: [
-                e.tags?.["addr:housenumber"],
-                e.tags?.["addr:street"],
-                e.tags?.["addr:city"],
-                e.tags?.["addr:state"],
-              ].filter(Boolean).join(", ") || e.tags?.["addr:full"] || "Address not listed",
+              address:
+                [
+                  e.tags?.["addr:housenumber"],
+                  e.tags?.["addr:street"],
+                  e.tags?.["addr:city"],
+                  e.tags?.["addr:state"],
+                ]
+                  .filter(Boolean)
+                  .join(", ") ||
+                e.tags?.["addr:full"] ||
+                "Address not listed",
               phone: e.tags?.phone ?? e.tags?.["contact:phone"] ?? "Not listed",
               lat: e.calculatedLat!,
               lng: e.calculatedLon!,
               rating: null,
               ratingCount: 0,
               status: "OPERATIONAL",
-              distanceKm:
-                hasCoords && body.lat && body.lng
-                  ? haversine(body.lat, body.lng, e.calculatedLat!, e.calculatedLon!)
-                  : null,
+              distanceKm: haversine(searchLat!, searchLng!, e.calculatedLat!, e.calculatedLon!),
             }))
             .sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
 
-          return json({ places });
+          return json({ 
+            places,
+            center: { lat: searchLat, lng: searchLng }
+          });
         } catch (e) {
           return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
         }

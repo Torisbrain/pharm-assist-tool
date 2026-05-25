@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -90,17 +91,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@PharmVerifyNG" },
       { name: "twitter:title", content: "PharmVerify NG" },
-      {
-        name: "twitter:description",
-        content:
-          "PharmVerify NG allows users to quickly check drug authenticity, find pharmacies, and verify medications in Nigeria and across Africa.",
-      },
+      { name: "twitter:description", content: "PharmVerify NG allows users to quickly check drug authenticity, find pharmacies, and verify medications in Nigeria and across Africa." },
+      { name: "theme-color", content: "#0066cc" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "PharmVerify" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/icon-192x192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -127,10 +127,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function NavBar() {
   const links = [
     { to: "/", label: "Verify Drug" },
-    { to: "/features", label: "Features" },
     { to: "/interactions", label: "Interactions" },
     { to: "/pharmacies", label: "Pharmacies" },
-    { to: "/dashboard", label: "Dashboard" },
+    { to: "/dashboard", label: "User Dashboard" },
+    { to: "/pharmacy-portal", label: "Pharmacy Portal" },
   ] as const;
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
@@ -141,13 +141,13 @@ function NavBar() {
           </span>
           <span className="text-sm font-semibold text-foreground">PharmVerify NG</span>
         </Link>
-        <nav className="flex items-center gap-1 overflow-x-auto">
+        <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {links.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               activeOptions={{ exact: l.to === "/" }}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary transition-colors"
+              className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary transition-colors"
             >
               {l.label}
             </Link>
@@ -160,6 +160,21 @@ function NavBar() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
+            console.log("SW registered: ", registration);
+          })
+          .catch((registrationError) => {
+            console.log("SW registration failed: ", registrationError);
+          });
+      });
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

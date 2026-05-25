@@ -1,127 +1,285 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import {
+  MapPin,
+  Phone,
+  Search,
+  Package,
+  Loader2,
+  Navigation,
+  ExternalLink,
+  Info,
+  ArrowRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, Card as AlertCard } from "@/components/ui/alert";
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
+interface Pharmacy {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  lat: number;
+  lng: number;
+  distanceKm: number | null;
+  rating: number | null;
+  ratingCount: number;
+  status: string;
 }
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders() },
-  });
-}
-
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
-}
-
-interface OSMElement {
-  id: number;
-  type: "node" | "way";
-  lat?: number;
-  lon?: number;
-  center?: { lat: number; lon: number };
-  tags?: Record<string, string>;
-}
+type Sp = { q?: string };
 
 export const Route = createFileRoute("/pharmacies")({
-  server: {
-    handlers: {
-      OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders() }),
-      POST: async ({ request }) => {
-        let body: { lat?: number; lng?: number; query?: string; radius?: number };
-        try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
-
-        const radius = Math.min(Math.max(body.radius ?? 8000, 500), 50000);
-        const hasCoords = typeof body.lat === "number" && typeof body.lng === "number";
-        const query = (body.query ?? "").trim();
-
-        try {
-          let overpassQuery = "";
-
-          if (hasCoords && !query) {
-            // Search by coordinates
-            overpassQuery = `
-              [out:json][timeout:25];
-              (
-                node["amenity"="pharmacy"](around:${radius},${body.lat},${body.lng});
-                way["amenity"="pharmacy"](around:${radius},${body.lat},${body.lng});
-              );
-              out center 20;
-            `;
-          } else {
-            // Extract just the city — take last word(s) as location (handles mixed queries like "CUREFENAC PORT HARCOURT")
-            const cityPart = query ? query.split(" ").slice(-2).join(" ") : "Nigeria";
-
-            overpassQuery = `
-              [out:json][timeout:25];
-              area["name"~"${cityPart}",i]["boundary"="administrative"]->.searchArea;
-              (
-                node["amenity"="pharmacy"](area.searchArea);
-                way["amenity"="pharmacy"](area.searchArea);
-              );
-              out center 20;
-            `;
-          }
-
-          const res = await fetch("https://overpass-api.de/api/interpreter", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "data=" + encodeURIComponent(overpassQuery),
-          });
-
-          if (!res.ok) {
-            return json({ error: "Overpass API error" }, 502);
-          }
-
-          const data = await res.json() as { elements: OSMElement[] };
-
-          const places = data.elements
-            .map((e) => ({
-              ...e,
-              calculatedLat: e.lat ?? e.center?.lat,
-              calculatedLon: e.lon ?? e.center?.lon,
-            }))
-            .filter((e) => e.calculatedLat && e.calculatedLon)
-            .map((e) => ({
-              id: String(e.id),
-              name: e.tags?.name ?? e.tags?.["name:en"] ?? "Pharmacy",
-              address: [
-                e.tags?.["addr:housenumber"],
-                e.tags?.["addr:street"],
-                e.tags?.["addr:city"],
-                e.tags?.["addr:state"],
-              ].filter(Boolean).join(", ") || e.tags?.["addr:full"] || "Address not listed",
-              phone: e.tags?.phone ?? e.tags?.["contact:phone"] ?? "Not listed",
-              lat: e.calculatedLat!,
-              lng: e.calculatedLon!,
-              rating: null,
-              ratingCount: 0,
-              status: "OPERATIONAL",
-              distanceKm:
-                hasCoords && body.lat && body.lng
-                  ? haversine(body.lat, body.lng, e.calculatedLat!, e.calculatedLon!)
-                  : null,
-            }))
-            .sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
-
-          return json({ places });
-        } catch (e) {
-          return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
-        }
+  validateSearch: (s: Record<string, unknown>): Sp => ({
+    q: typeof s.q === "string" ? s.q : undefined,
+  }),
+  component: PharmaciesPage,
+  head: () => ({
+    meta: [
+      { title: "Pharmacy Locator — PharmVerify NG" },
+      {
+        name: "description",
+        content: "Find registered pharmacies near you in Nigeria. Search by city or use your current location.",
       },
-    },
-  },
+    ],
+  }),
 });
+
+function PharmaciesPage() {
+  const { q } = Route.useSearch();
+  const [query, setQuery] = useState(q || "");
+  const [results, setResults] = useState<Pharmacy[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [error, setError] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  const fetchPharmacies = async (params: { lat?: number; lng?: number; query?: string }) => {
+    setLoading(true);
+    setError("");
+    setSearched(true);
+    try {
+      const res = await fetch("/api/pharmacies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to fetch pharmacies");
+      }
+
+      const data = await res.json();
+      setResults(data.places || []);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    fetchPharmacies({ query });
+  };
+
+  const findNearby = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(coords);
+        fetchPharmacies(coords);
+      },
+      (err) => {
+        setLoading(false);
+        setError("Could not get your location. Please search by city name.");
+        console.error(err);
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (q) {
+      fetchPharmacies({ query: q });
+    }
+  }, [q]);
+
+  return (
+    <main className="min-h-[calc(100vh-3.5rem)] bg-background">
+      <div className="container mx-auto max-w-4xl px-4 py-8 sm:py-12">
+        <header className="mb-10 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <MapPin className="h-6 w-6" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Pharmacy Locator</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
+            Find registered pharmacies near you to verify drug availability and consult with licensed professionals.
+          </p>
+        </header>
+
+        <Card className="mb-8 border-primary/20 shadow-sm">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Enter city or area (e.g. Ikeja, Lekki, Abuja...)"
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={loading} className="flex-1 sm:w-32">
+                  {loading && !userLocation ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    "Search"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={findNearby}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <Navigation className="h-4 w-4" />
+                  <span>Near me</span>
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Alert variant="destructive" className="mb-8 border-yellow-200 bg-yellow-50 text-yellow-900">
+            <Info className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <section aria-live="polite">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Loader2 className="h-10 w-10 animate-spin text-primary/60" />
+              <p className="mt-4 text-muted-foreground">Searching for registered pharmacies...</p>
+            </div>
+          )}
+
+          {!loading && searched && results.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Found {results.length} pharmacies {userLocation ? "near you" : `in "${query}"`}
+                </h2>
+                <Badge variant="secondary" className="font-normal">
+                  Sorted by distance
+                </Badge>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {results.map((p) => (
+                  <Card key={p.id} className="overflow-hidden transition-all hover:border-primary/50 hover:shadow-md">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="line-clamp-1 text-lg">{p.name}</CardTitle>
+                        <Badge variant="outline" className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">
+                          Open
+                        </Badge>
+                      </div>
+                      <CardDescription className="flex items-start gap-1.5 pt-1">
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span className="line-clamp-2">{p.address}</span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-4">
+                      {p.phone !== "Not listed" ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5" />
+                          <a href={`tel:${p.phone}`} className="font-medium text-foreground hover:text-primary hover:underline">
+                            {p.phone}
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
+                          <Phone className="h-3.5 w-3.5" />
+                          Phone not listed
+                        </div>
+                      )}
+                      {p.distanceKm != null && (
+                        <p className="mt-3 text-sm font-bold text-primary">
+                          {p.distanceKm.toFixed(1)} km away
+                        </p>
+                      )}
+                    </CardContent>
+                    <CardFooter className="bg-muted/30 pt-3">
+                      <Button asChild variant="ghost" size="sm" className="w-full justify-between hover:bg-primary/10 hover:text-primary">
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>Get Directions</span>
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!loading && searched && results.length === 0 && !error && (
+            <Card className="border-dashed py-16 text-center">
+              <CardContent>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <MapPin className="h-8 w-8 text-muted-foreground/40" />
+                </div>
+                <h3 className="text-xl font-semibold">No pharmacies found</h3>
+                <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
+                  We couldn't find any registered pharmacies in this specific area. Try searching for a larger city or check your spelling.
+                </p>
+                <Button variant="outline" className="mt-6" onClick={() => setQuery("")}>
+                  Clear search
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {!searched && !loading && (
+            <div className="grid gap-6 sm:grid-cols-3">
+               {[
+                 { title: "Registered Only", desc: "We only show pharmacies verified by regulatory bodies.", icon: Package },
+                 { title: "Find Nearby", desc: "Use your GPS to find the closest help in an emergency.", icon: Navigation },
+                 { title: "Real Data", desc: "Data sourced from OpenStreetMap and Nominatim.", icon: Info }
+               ].map((item, i) => (
+                 <div key={i} className="rounded-xl border bg-card p-6 text-center shadow-sm">
+                   <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/5 text-primary">
+                     <item.icon className="h-5 w-5" />
+                   </div>
+                   <h3 className="font-semibold">{item.title}</h3>
+                   <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                 </div>
+               ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
