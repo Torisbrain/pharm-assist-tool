@@ -1,10 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifyApiKey } from "../../lib/auth";
 import { gbSearch, rowToResult, cleanName } from "../../lib/nafdac";
 
-export const Route = createFileRoute("/api/verify-drug")({
+export const Route = createFileRoute("/api/verify")({
   server: {
     handlers: {
       POST: async ({ request, context }: { request: Request; context: any }) => {
+        const apiKey = request.headers.get("X-API-Key");
+        if (!apiKey) {
+          return Response.json({ error: "Missing API Key" }, { status: 401 });
+        }
+
+        const db = context?.env?.DB;
+        const apiResult = await verifyApiKey(apiKey, db);
+        if (!apiResult) {
+          return Response.json({ error: "Invalid or inactive API Key" }, { status: 403 });
+        }
+
         const { query } = (await request.json()) as { query?: string };
         const q = (query || "").trim();
         if (!q) {
@@ -43,27 +55,13 @@ export const Route = createFileRoute("/api/verify-drug")({
             activeIngredient: "Unknown",
             dosage: "Unknown",
             alternatives: [],
-            explanation:
-              "No matching product found in the NAFDAC Greenbook (Nigeria's Registered Product Database).",
-            warning:
-              "Drug not found in NAFDAC Greenbook. Verify directly at greenbook.nafdac.gov.ng or consult a licensed pharmacist before use.",
+            explanation: "No matching product found in the NAFDAC Greenbook.",
+            warning: "Drug not found in NAFDAC Greenbook.",
             source: "NAFDAC Greenbook",
           });
         } catch (err) {
-          console.error("Greenbook error:", err);
-          return Response.json({
-            name: q,
-            nafdacNumber: "Lookup failed",
-            manufacturer: "Unknown",
-            status: "Unknown",
-            activeIngredient: "Unknown",
-            dosage: "Unknown",
-            alternatives: [],
-            explanation:
-              "Could not reach the NAFDAC Greenbook service. Please try again shortly.",
-            warning: "Verification service temporarily unavailable.",
-            source: "NAFDAC Greenbook",
-          });
+          console.error("API verify error:", err);
+          return Response.json({ error: "Verification failed" }, { status: 500 });
         }
       },
     },

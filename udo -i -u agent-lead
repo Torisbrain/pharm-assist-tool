@@ -1,0 +1,59 @@
+[33mcommit 1b465f52549666fcf773face2dffc1bbe4d99f7c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: AuraHealth Designer <designer@aurahealth.ng>
+Date:   Mon May 25 12:10:22 2026 +0000
+
+    feat: implement User Dashboard, Pharmacy Locator fix, and PWA support
+
+[33mcommit bbdc865e306b20b54aad3a23c05c4eb1ffd90359[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 23:18:29 2026 +0000
+
+    fix: isolate city location keywords from compound query inputs and sync ui components
+
+[33mcommit 55eaecddb5459158a81a0ea027aec12bd3158ef9[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Mon May 25 00:11:18 2026 +0100
+
+    Update pharmacies.ts
+
+[33mcommit 106d586d51338f17fa9d66959ffef2fe32ef8c8d[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 22:52:37 2026 +0000
+
+    feat: add wrangler for CLI deployment
+
+[33mcommit b5444b96824fb0d745d4e35c55a9e5024d1d958d[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 21:55:21 2026 +0000
+
+    fix: resolve overpass api ql case-insensitive regex flag compilation crash
+
+[33mcommit aeadd14e9b33eb3a10891ac34e06bed9ccfd184f[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 21:43:09 2026 +0000
+
+    fix: safely normalize both node and way coordinate types from overpass data
+
+[33mcommit 91e7487f0c4ff4f250343e7abe0ebfa0fc28e27a[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 22:36:20 2026 +0100
+
+    Update pharmacies.ts
+
+[33mcommit 336a101de8ee218a8996a068fca73ed5e0327954[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 22:32:10 2026 +0100
+
+    Update pharmacies.ts
+
+[33mcommit ac80440f5dab591bbffaf47cd2c6cd14fa4598dc[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 22:27:09 2026 +0100
+
+    Update pharmacies.ts
+
+[33mcommit 4081a50619f199a6b543259246b71d46a9cdd85c[m
+Author: Victoria Robin <victoriarobintoris32@gmail.com>
+Date:   Sun May 24 22:24:28 2026 +0100
+
+    Update pharmacies.ts

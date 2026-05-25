@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifyApiKey } from "../../lib/auth";
 
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
   };
 }
 
@@ -40,14 +41,43 @@ export const Route = createFileRoute("/api/pharmacies")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders() }),
-      POST: async ({ request }) => {
-        let body: { lat?: number; lng?: number; query?: string; radius?: number };
+      POST: async ({ request, context }: { request: Request; context: any }) => {
+        const apiKey = request.headers.get("X-API-Key");
+        const db = context?.env?.DB;
+
+        let body: any;
         try {
           body = await request.json();
         } catch {
           return json({ error: "Invalid JSON" }, 400);
         }
 
+        // B2B Pharmacy Management (Upsert)
+        if (apiKey) {
+          const apiResult = await verifyApiKey(apiKey, db);
+          if (!apiResult) {
+            return json({ error: "Invalid or inactive API Key" }, 403);
+          }
+
+          const { id, name, address, phone, lat, lng } = body;
+          if (!name) return json({ error: "Pharmacy name required" }, 400);
+
+          const pharmacyId = id || crypto.randomUUID();
+          await db.prepare(`
+            INSERT INTO pharmacies (id, owner_id, name, address, phone, lat, lng, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              name = excluded.name,
+              address = excluded.address,
+              phone = excluded.phone,
+              lat = excluded.lat,
+              lng = excluded.lng
+          `).bind(pharmacyId, apiResult.user_id, name, address, phone, lat, lng, Date.now()).run();
+
+          return json({ message: "Pharmacy updated successfully", id: pharmacyId });
+        }
+
+        // Public Pharmacy Locator
         let searchLat = body.lat;
         let searchLng = body.lng;
         const radius = Math.min(Math.max(body.radius ?? 8000, 500), 50000);
@@ -149,3 +179,9 @@ export const Route = createFileRoute("/api/pharmacies")({
     },
   },
 });
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'

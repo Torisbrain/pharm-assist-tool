@@ -57,13 +57,37 @@ const SAVED_PHARMACIES = [
 ];
 
 function UserDashboard() {
-  const [user] = useState({
+  const [user, setUser] = useState({
     name: "John Doe",
     email: "john.doe@example.com",
     plan: "Free",
     verificationsThisMonth: 12,
     limit: 20,
   });
+
+  const handleUpgrade = async (planType: 'PRO' | 'PHARMACY') => {
+    try {
+      const response = await fetch('/api/payment/initialize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Assuming token is in localStorage or handled by auth middleware
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+        body: JSON.stringify({ planType }),
+      });
+
+      const data = await response.json();
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        alert('Failed to initialize payment: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      alert('An error occurred. Please try again.');
+    }
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] flex-col bg-muted/20 sm:flex-row">
@@ -263,7 +287,13 @@ function UserDashboard() {
                    </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="secondary" className="w-full font-bold">Upgrade for ₦2,000/mo</Button>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full font-bold"
+                    onClick={() => handleUpgrade('PRO')}
+                  >
+                    Upgrade for ₦2,000/mo
+                  </Button>
                 </CardFooter>
               </Card>
             </div>
@@ -273,3 +303,15 @@ function UserDashboard() {
     </div>
   );
 }
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
+/home/engine/.bashrc: line 1: syntax error near unexpected token `('
+/home/engine/.bashrc: line 1: `. /etc/profile.d/workload-containment.shn# ~/.bashrc: executed by bash(1) for non-login shells.'
