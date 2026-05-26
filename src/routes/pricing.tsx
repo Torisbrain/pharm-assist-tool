@@ -1,191 +1,240 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
+import { CheckCircle2, Zap, Building2, Shield } from 'lucide-react'
 
-export const Route = createFileRoute("/pricing")({
+export const Route = createFileRoute('/pricing')({
   component: PricingPage,
-});
+})
+
+const PLANS = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    priceLabel: 'Free',
+    description: 'Perfect for occasional drug verification needs.',
+    icon: Shield,
+    color: 'border-gray-200',
+    badgeColor: 'bg-gray-100 text-gray-700',
+    features: [
+      '5 drug verifications per day',
+      'Basic NAFDAC lookup',
+      'Pharmacy locator',
+      'Email support',
+    ],
+    cta: 'Get Started',
+    paystackPlanCode: null,
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 200000, // ₦2,000 in kobo
+    priceLabel: '₦2,000/month',
+    description: 'For health-conscious individuals who verify frequently.',
+    icon: Zap,
+    color: 'border-green-500',
+    badgeColor: 'bg-green-100 text-green-700',
+    features: [
+      'Unlimited drug verifications',
+      'Advanced NAFDAC greenbook access',
+      'Priority pharmacy locator',
+      'Health safety alerts',
+      'Verification history',
+      'Priority email support',
+    ],
+    cta: 'Subscribe — ₦2,000/mo',
+    paystackPlanCode: 'PLN_pro_consumer',
+    popular: true,
+  },
+  {
+    id: 'pharmacy',
+    name: 'Pharmacy',
+    price: 500000, // ₦5,000 in kobo
+    priceLabel: '₦5,000/month',
+    description: 'For pharmacy owners and pharmaceutical businesses.',
+    icon: Building2,
+    color: 'border-blue-500',
+    badgeColor: 'bg-blue-100 text-blue-700',
+    features: [
+      'Everything in Pro',
+      'AI-driven inventory intelligence',
+      'Business analytics dashboard',
+      'API access (10,000 calls/month)',
+      'Pharmacy portal listing',
+      'Bulk drug verification',
+      'Dedicated account manager',
+      'SLA support',
+    ],
+    cta: 'Subscribe — ₦5,000/mo',
+    paystackPlanCode: 'PLN_pharmacy_business',
+  },
+]
 
 declare global {
   interface Window {
     PaystackPop: {
-      setup: (options: Record<string, unknown>) => { openIframe: () => void };
-    };
+      setup: (config: Record<string, unknown>) => { openIframe: () => void }
+    }
   }
 }
 
-const PLANS = [
-  {
-    id: "free",
-    name: "Free",
-    price: "₦0",
-    period: "forever",
-    description: "Get started with basic drug verification.",
-    features: [
-      "5 verifications per day",
-      "Basic NAFDAC lookup",
-      "Pharmacy locator",
-    ],
-    cta: "Get Started",
-    paystackAmount: null,
-    paystackPlan: null,
-    highlight: false,
-  },
-  {
-    id: "pro",
-    name: "Consumer Pro",
-    price: "₦2,000",
-    period: "per month",
-    description: "Unlimited verifications and advanced health alerts.",
-    features: [
-      "Unlimited verifications",
-      "Advanced drug interaction alerts",
-      "Health history dashboard",
-      "Priority support",
-      "SMS/email alerts for drug recalls",
-    ],
-    cta: "Subscribe — ₦2,000/mo",
-    paystackAmount: 200000, // in kobo
-    paystackPlan: "pro",
-    highlight: true,
-  },
-  {
-    id: "pharmacy",
-    name: "Pharmacy / B2B",
-    price: "₦5,000",
-    period: "per month",
-    description: "AI intelligence, API access, and business dashboard.",
-    features: [
-      "Everything in Pro",
-      "AI inventory intelligence",
-      "API access for integrations",
-      "Analytics & revenue dashboard",
-      "Bulk verification endpoint",
-      "Dedicated account manager",
-    ],
-    cta: "Subscribe — ₦5,000/mo",
-    paystackAmount: 500000, // in kobo
-    paystackPlan: "pharmacy",
-    highlight: false,
-  },
-];
+function PricingPage() {
+  const handlePaystackCheckout = (plan: (typeof PLANS)[number]) => {
+    if (!plan.paystackPlanCode) return
 
-function initPaystack(amount: number, plan: string, email: string) {
-  const script = document.createElement("script");
-  script.src = "https://js.paystack.co/v1/inline.js";
-  script.onload = () => {
+    const paystackPublicKey =
+      (import.meta as any).env?.VITE_PAYSTACK_PUBLIC_KEY ||
+      (typeof window !== 'undefined' && (window as any).__PAYSTACK_PUBLIC_KEY__) ||
+      ''
+
+    if (!paystackPublicKey) {
+      alert('Payment system is currently unavailable. Please try again later.')
+      return
+    }
+
+    if (typeof window === 'undefined' || !window.PaystackPop) {
+      // Load Paystack inline script dynamically
+      const script = document.createElement('script')
+      script.src = 'https://js.paystack.co/v1/inline.js'
+      script.onload = () => openPaystackModal(plan, paystackPublicKey)
+      document.head.appendChild(script)
+    } else {
+      openPaystackModal(plan, paystackPublicKey)
+    }
+  }
+
+  const openPaystackModal = (
+    plan: (typeof PLANS)[number],
+    publicKey: string
+  ) => {
     const handler = window.PaystackPop.setup({
-      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "",
-      email,
-      amount,
-      currency: "NGN",
-      ref: `AURA-${plan.toUpperCase()}-${Date.now()}`,
-      metadata: { plan },
+      key: publicKey,
+      email: 'user@example.com', // In production: use authenticated user's email
+      amount: plan.price,
+      currency: 'NGN',
+      plan: plan.paystackPlanCode,
+      ref: `PV-${plan.id.toUpperCase()}-${Date.now()}`,
+      metadata: {
+        plan_id: plan.id,
+        custom_fields: [
+          {
+            display_name: 'Plan',
+            variable_name: 'plan',
+            value: plan.name,
+          },
+        ],
+      },
       callback: (response: { reference: string }) => {
-        // redirect to dashboard after successful payment
-        window.location.href = `/dashboard?ref=${response.reference}&plan=${plan}`;
+        // Verify payment on backend
+        fetch('/api/payment/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reference: response.reference, plan: plan.id }),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            window.location.href = '/dashboard?upgraded=true'
+          })
+          .catch(() => {
+            alert('Payment verification failed. Please contact support.')
+          })
       },
       onClose: () => {
-        console.log("Payment window closed");
+        // User closed modal — no action needed
       },
-    });
-    handler.openIframe();
-  };
-  document.body.appendChild(script);
-}
-
-function PricingPage() {
-  const handleSubscribe = (plan: (typeof PLANS)[number]) => {
-    if (!plan.paystackAmount) {
-      window.location.href = "/";
-      return;
-    }
-    const email = prompt("Enter your email to subscribe:");
-    if (!email) return;
-    initPaystack(plan.paystackAmount, plan.paystackPlan!, email);
-  };
+    })
+    handler.openIframe()
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Simple, Transparent Pricing
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Protect your health with verified NAFDAC drug authentication.
-            Choose the plan that fits your needs.
-          </p>
-        </div>
+    <div className="min-h-screen bg-background py-16 px-4">
+      {/* Header */}
+      <div className="max-w-4xl mx-auto text-center mb-12">
+        <h1 className="text-4xl font-bold tracking-tight mb-4">
+          Simple, Transparent Pricing
+        </h1>
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          Protect yourself from counterfeit drugs. Choose the plan that fits
+          your needs. All plans include NAFDAC drug verification.
+        </p>
+      </div>
 
-        {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {PLANS.map((plan) => (
+      {/* Plans Grid */}
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        {PLANS.map((plan) => {
+          const Icon = plan.icon
+          return (
             <div
               key={plan.id}
-              className={`rounded-2xl p-8 flex flex-col shadow-md ${
-                plan.highlight
-                  ? "bg-green-600 text-white ring-4 ring-green-300 scale-105"
-                  : "bg-white text-gray-900"
-              }`}
+              className={`relative rounded-2xl border-2 ${plan.color} bg-card p-6 flex flex-col shadow-sm hover:shadow-md transition-shadow`}
             >
-              {plan.highlight && (
-                <span className="text-xs font-semibold uppercase tracking-wider bg-white text-green-700 rounded-full px-3 py-1 self-start mb-4">
-                  Most Popular
-                </span>
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                </div>
               )}
-              <h2 className="text-2xl font-bold mb-1">{plan.name}</h2>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl font-extrabold">{plan.price}</span>
-                <span
-                  className={`text-sm ${plan.highlight ? "text-green-100" : "text-gray-500"}`}
-                >
-                  /{plan.period}
-                </span>
-              </div>
-              <p
-                className={`text-sm mb-6 ${plan.highlight ? "text-green-100" : "text-gray-500"}`}
-              >
-                {plan.description}
-              </p>
 
-              <ul className="space-y-3 mb-8 flex-1">
+              {/* Plan Header */}
+              <div className="mb-6">
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-3 ${plan.badgeColor}`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {plan.name}
+                </div>
+                <div className="text-3xl font-bold mb-1">{plan.priceLabel}</div>
+                <p className="text-muted-foreground text-sm">{plan.description}</p>
+              </div>
+
+              {/* Features */}
+              <ul className="space-y-2 mb-8 flex-1">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm">
-                    <span
-                      className={`mt-0.5 text-lg leading-none ${plan.highlight ? "text-green-200" : "text-green-500"}`}
-                    >
-                      ✓
-                    </span>
-                    {feature}
+                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
 
-              <button
-                onClick={() => handleSubscribe(plan)}
-                className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${
-                  plan.highlight
-                    ? "bg-white text-green-700 hover:bg-green-50"
-                    : plan.id === "free"
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-green-600 text-white hover:bg-green-700"
-                }`}
-              >
-                {plan.cta}
-              </button>
+              {/* CTA Button */}
+              {plan.paystackPlanCode ? (
+                <button
+                  onClick={() => handlePaystackCheckout(plan)}
+                  className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-colors ${
+                    plan.popular
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              ) : (
+                <a
+                  href="/auth/signup"
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-sm text-center transition-colors bg-muted hover:bg-muted/80 text-foreground block"
+                >
+                  {plan.cta}
+                </a>
+              )}
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
-        {/* Footer note */}
-        <p className="text-center text-gray-500 text-sm mt-10">
-          All payments processed securely via Paystack. Cancel anytime.
-          Questions?{" "}
-          <a href="mailto:support@aurahealth.ng" className="text-green-600 underline">
-            Contact us
-          </a>
+      {/* Trust Badges */}
+      <div className="max-w-4xl mx-auto mt-12 text-center">
+        <p className="text-sm text-muted-foreground mb-4">
+          Secure payments powered by Paystack • Cancel anytime • NAFDAC verified
+          data
         </p>
+        <div className="flex justify-center gap-6 text-xs text-muted-foreground">
+          <span>🔒 SSL Encrypted</span>
+          <span>🇳🇬 NGN Currency</span>
+          <span>📱 Mobile-First</span>
+          <span>⚡ Instant Activation</span>
+        </div>
       </div>
     </div>
-  );
+  )
 }
