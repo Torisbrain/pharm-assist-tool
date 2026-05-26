@@ -17,10 +17,24 @@ import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ApiVerifyDrugRouteImport } from './routes/api/verify-drug'
+import { Route as ApiVerifyRouteImport } from './routes/api/verify'
+import { Route as ApiVerificationsRouteImport } from './routes/api/verifications'
+import { Route as ApiReportsRouteImport } from './routes/api/reports'
 import { Route as ApiReportDrugRouteImport } from './routes/api/report-drug'
 import { Route as ApiPharmaciesRouteImport } from './routes/api/pharmacies'
+import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminAlertsRouteImport } from './routes/admin/alerts'
+import { Route as ApiUserKeysRouteImport } from './routes/api/user/keys'
+import { Route as ApiPaymentWebhookRouteImport } from './routes/api/payment/webhook'
+import { Route as ApiPaymentInitializeRouteImport } from './routes/api/payment/initialize'
+import { Route as ApiAuthSignupRouteImport } from './routes/api/auth/signup'
+import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
+import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
+import { Route as ApiAdminStatsRouteImport } from './routes/api/admin/stats'
 import { Route as ApiAdminReportsRouteImport } from './routes/api/admin/reports'
+import { Route as ApiAdminBroadcastAlertRouteImport } from './routes/api/admin/broadcast-alert'
 
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
@@ -62,9 +76,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiVerifyDrugRoute = ApiVerifyDrugRouteImport.update({
   id: '/api/verify-drug',
   path: '/api/verify-drug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVerifyRoute = ApiVerifyRouteImport.update({
+  id: '/api/verify',
+  path: '/api/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVerificationsRoute = ApiVerificationsRouteImport.update({
+  id: '/api/verifications',
+  path: '/api/verifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReportsRoute = ApiReportsRouteImport.update({
+  id: '/api/reports',
+  path: '/api/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiReportDrugRoute = ApiReportDrugRouteImport.update({
@@ -77,54 +111,145 @@ const ApiPharmaciesRoute = ApiPharmaciesRouteImport.update({
   path: '/api/pharmacies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAlertsRoute = AdminAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiUserKeysRoute = ApiUserKeysRouteImport.update({
+  id: '/api/user/keys',
+  path: '/api/user/keys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaymentWebhookRoute = ApiPaymentWebhookRouteImport.update({
+  id: '/api/payment/webhook',
+  path: '/api/payment/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaymentInitializeRoute = ApiPaymentInitializeRouteImport.update({
+  id: '/api/payment/initialize',
+  path: '/api/payment/initialize',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSignupRoute = ApiAuthSignupRouteImport.update({
+  id: '/api/auth/signup',
+  path: '/api/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthMeRoute = ApiAuthMeRouteImport.update({
+  id: '/api/auth/me',
+  path: '/api/auth/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
+  id: '/api/auth/login',
+  path: '/api/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminStatsRoute = ApiAdminStatsRouteImport.update({
+  id: '/api/admin/stats',
+  path: '/api/admin/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
   id: '/api/admin/reports',
   path: '/api/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminBroadcastAlertRoute = ApiAdminBroadcastAlertRouteImport.update({
+  id: '/api/admin/broadcast-alert',
+  path: '/api/admin/broadcast-alert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
   '/pharmacy-portal': typeof PharmacyPortalRoute
   '/report': typeof ReportRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/api/pharmacies': typeof ApiPharmaciesRoute
   '/api/report-drug': typeof ApiReportDrugRoute
+  '/api/reports': typeof ApiReportsRoute
+  '/api/verifications': typeof ApiVerificationsRoute
+  '/api/verify': typeof ApiVerifyRoute
   '/api/verify-drug': typeof ApiVerifyDrugRoute
+  '/admin/': typeof AdminIndexRoute
+  '/api/admin/broadcast-alert': typeof ApiAdminBroadcastAlertRoute
   '/api/admin/reports': typeof ApiAdminReportsRoute
+  '/api/admin/stats': typeof ApiAdminStatsRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/payment/initialize': typeof ApiPaymentInitializeRoute
+  '/api/payment/webhook': typeof ApiPaymentWebhookRoute
+  '/api/user/keys': typeof ApiUserKeysRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
   '/pharmacy-portal': typeof PharmacyPortalRoute
   '/report': typeof ReportRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/api/pharmacies': typeof ApiPharmaciesRoute
   '/api/report-drug': typeof ApiReportDrugRoute
+  '/api/reports': typeof ApiReportsRoute
+  '/api/verifications': typeof ApiVerificationsRoute
+  '/api/verify': typeof ApiVerifyRoute
   '/api/verify-drug': typeof ApiVerifyDrugRoute
+  '/admin': typeof AdminIndexRoute
+  '/api/admin/broadcast-alert': typeof ApiAdminBroadcastAlertRoute
   '/api/admin/reports': typeof ApiAdminReportsRoute
+  '/api/admin/stats': typeof ApiAdminStatsRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/payment/initialize': typeof ApiPaymentInitializeRoute
+  '/api/payment/webhook': typeof ApiPaymentWebhookRoute
+  '/api/user/keys': typeof ApiUserKeysRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
   '/pharmacy-portal': typeof PharmacyPortalRoute
   '/report': typeof ReportRoute
+  '/admin/alerts': typeof AdminAlertsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/api/pharmacies': typeof ApiPharmaciesRoute
   '/api/report-drug': typeof ApiReportDrugRoute
+  '/api/reports': typeof ApiReportsRoute
+  '/api/verifications': typeof ApiVerificationsRoute
+  '/api/verify': typeof ApiVerifyRoute
   '/api/verify-drug': typeof ApiVerifyDrugRoute
+  '/admin/': typeof AdminIndexRoute
+  '/api/admin/broadcast-alert': typeof ApiAdminBroadcastAlertRoute
   '/api/admin/reports': typeof ApiAdminReportsRoute
+  '/api/admin/stats': typeof ApiAdminStatsRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/payment/initialize': typeof ApiPaymentInitializeRoute
+  '/api/payment/webhook': typeof ApiPaymentWebhookRoute
+  '/api/user/keys': typeof ApiUserKeysRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,24 +262,51 @@ export interface FileRouteTypes {
     | '/pharmacies'
     | '/pharmacy-portal'
     | '/report'
+    | '/admin/alerts'
+    | '/admin/reports'
     | '/api/pharmacies'
     | '/api/report-drug'
+    | '/api/reports'
+    | '/api/verifications'
+    | '/api/verify'
     | '/api/verify-drug'
+    | '/admin/'
+    | '/api/admin/broadcast-alert'
     | '/api/admin/reports'
+    | '/api/admin/stats'
+    | '/api/auth/login'
+    | '/api/auth/me'
+    | '/api/auth/signup'
+    | '/api/payment/initialize'
+    | '/api/payment/webhook'
+    | '/api/user/keys'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/dashboard'
     | '/features'
     | '/interactions'
     | '/pharmacies'
     | '/pharmacy-portal'
     | '/report'
+    | '/admin/alerts'
+    | '/admin/reports'
     | '/api/pharmacies'
     | '/api/report-drug'
+    | '/api/reports'
+    | '/api/verifications'
+    | '/api/verify'
     | '/api/verify-drug'
+    | '/admin'
+    | '/api/admin/broadcast-alert'
     | '/api/admin/reports'
+    | '/api/admin/stats'
+    | '/api/auth/login'
+    | '/api/auth/me'
+    | '/api/auth/signup'
+    | '/api/payment/initialize'
+    | '/api/payment/webhook'
+    | '/api/user/keys'
   id:
     | '__root__'
     | '/'
@@ -165,15 +317,29 @@ export interface FileRouteTypes {
     | '/pharmacies'
     | '/pharmacy-portal'
     | '/report'
+    | '/admin/alerts'
+    | '/admin/reports'
     | '/api/pharmacies'
     | '/api/report-drug'
+    | '/api/reports'
+    | '/api/verifications'
+    | '/api/verify'
     | '/api/verify-drug'
+    | '/admin/'
+    | '/api/admin/broadcast-alert'
     | '/api/admin/reports'
+    | '/api/admin/stats'
+    | '/api/auth/login'
+    | '/api/auth/me'
+    | '/api/auth/signup'
+    | '/api/payment/initialize'
+    | '/api/payment/webhook'
+    | '/api/user/keys'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   FeaturesRoute: typeof FeaturesRoute
   InteractionsRoute: typeof InteractionsRoute
@@ -182,8 +348,19 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   ApiPharmaciesRoute: typeof ApiPharmaciesRoute
   ApiReportDrugRoute: typeof ApiReportDrugRoute
+  ApiReportsRoute: typeof ApiReportsRoute
+  ApiVerificationsRoute: typeof ApiVerificationsRoute
+  ApiVerifyRoute: typeof ApiVerifyRoute
   ApiVerifyDrugRoute: typeof ApiVerifyDrugRoute
+  ApiAdminBroadcastAlertRoute: typeof ApiAdminBroadcastAlertRoute
   ApiAdminReportsRoute: typeof ApiAdminReportsRoute
+  ApiAdminStatsRoute: typeof ApiAdminStatsRoute
+  ApiAuthLoginRoute: typeof ApiAuthLoginRoute
+  ApiAuthMeRoute: typeof ApiAuthMeRoute
+  ApiAuthSignupRoute: typeof ApiAuthSignupRoute
+  ApiPaymentInitializeRoute: typeof ApiPaymentInitializeRoute
+  ApiPaymentWebhookRoute: typeof ApiPaymentWebhookRoute
+  ApiUserKeysRoute: typeof ApiUserKeysRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,11 +421,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/verify-drug': {
       id: '/api/verify-drug'
       path: '/api/verify-drug'
       fullPath: '/api/verify-drug'
       preLoaderRoute: typeof ApiVerifyDrugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/verify': {
+      id: '/api/verify'
+      path: '/api/verify'
+      fullPath: '/api/verify'
+      preLoaderRoute: typeof ApiVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/verifications': {
+      id: '/api/verifications'
+      path: '/api/verifications'
+      fullPath: '/api/verifications'
+      preLoaderRoute: typeof ApiVerificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/reports': {
+      id: '/api/reports'
+      path: '/api/reports'
+      fullPath: '/api/reports'
+      preLoaderRoute: typeof ApiReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/report-drug': {
@@ -265,6 +470,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPharmaciesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/alerts': {
+      id: '/admin/alerts'
+      path: '/alerts'
+      fullPath: '/admin/alerts'
+      preLoaderRoute: typeof AdminAlertsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/user/keys': {
+      id: '/api/user/keys'
+      path: '/api/user/keys'
+      fullPath: '/api/user/keys'
+      preLoaderRoute: typeof ApiUserKeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payment/webhook': {
+      id: '/api/payment/webhook'
+      path: '/api/payment/webhook'
+      fullPath: '/api/payment/webhook'
+      preLoaderRoute: typeof ApiPaymentWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payment/initialize': {
+      id: '/api/payment/initialize'
+      path: '/api/payment/initialize'
+      fullPath: '/api/payment/initialize'
+      preLoaderRoute: typeof ApiPaymentInitializeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/signup': {
+      id: '/api/auth/signup'
+      path: '/api/auth/signup'
+      fullPath: '/api/auth/signup'
+      preLoaderRoute: typeof ApiAuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/me': {
+      id: '/api/auth/me'
+      path: '/api/auth/me'
+      fullPath: '/api/auth/me'
+      preLoaderRoute: typeof ApiAuthMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/login': {
+      id: '/api/auth/login'
+      path: '/api/auth/login'
+      fullPath: '/api/auth/login'
+      preLoaderRoute: typeof ApiAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/stats': {
+      id: '/api/admin/stats'
+      path: '/api/admin/stats'
+      fullPath: '/api/admin/stats'
+      preLoaderRoute: typeof ApiAdminStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/reports': {
       id: '/api/admin/reports'
       path: '/api/admin/reports'
@@ -272,12 +540,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/broadcast-alert': {
+      id: '/api/admin/broadcast-alert'
+      path: '/api/admin/broadcast-alert'
+      fullPath: '/api/admin/broadcast-alert'
+      preLoaderRoute: typeof ApiAdminBroadcastAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminAlertsRoute: typeof AdminAlertsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAlertsRoute: AdminAlertsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
   FeaturesRoute: FeaturesRoute,
   InteractionsRoute: InteractionsRoute,
@@ -286,8 +575,19 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   ApiPharmaciesRoute: ApiPharmaciesRoute,
   ApiReportDrugRoute: ApiReportDrugRoute,
+  ApiReportsRoute: ApiReportsRoute,
+  ApiVerificationsRoute: ApiVerificationsRoute,
+  ApiVerifyRoute: ApiVerifyRoute,
   ApiVerifyDrugRoute: ApiVerifyDrugRoute,
+  ApiAdminBroadcastAlertRoute: ApiAdminBroadcastAlertRoute,
   ApiAdminReportsRoute: ApiAdminReportsRoute,
+  ApiAdminStatsRoute: ApiAdminStatsRoute,
+  ApiAuthLoginRoute: ApiAuthLoginRoute,
+  ApiAuthMeRoute: ApiAuthMeRoute,
+  ApiAuthSignupRoute: ApiAuthSignupRoute,
+  ApiPaymentInitializeRoute: ApiPaymentInitializeRoute,
+  ApiPaymentWebhookRoute: ApiPaymentWebhookRoute,
+  ApiUserKeysRoute: ApiUserKeysRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -5,6 +5,7 @@ interface User {
   id: string
   email: string
   plan?: string
+  is_admin?: boolean
 }
 
 interface AuthState {

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Boxes,
   ShieldCheck,
@@ -7,6 +7,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   ShieldQuestion,
+  Key,
+  Plus,
+  Trash2,
+  Copy,
+  Check
 } from "lucide-react";
 import { DB } from "@/lib/drugs";
 
@@ -23,7 +28,7 @@ export const Route = createFileRoute("/pharmacy-portal")({
   }),
 });
 
-type Section = "inventory" | "supplier" | "alerts";
+type Section = "inventory" | "supplier" | "alerts" | "api";
 
 interface InventoryItem {
   name: string;
@@ -76,10 +81,11 @@ const ALERTS = [
   },
 ];
 
-const NAV: { id: Section; label: string; icon: typeof Boxes }[] = [
+const NAV: { id: Section; label: string; icon: any }[] = [
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "supplier", label: "Verify Supplier", icon: ShieldCheck },
   { id: "alerts", label: "NAFDAC Alerts", icon: Bell },
+  { id: "api", label: "API Management", icon: Key },
 ];
 
 function statusPill(s: InventoryItem["status"]) {
@@ -137,6 +143,7 @@ function DashboardPage() {
         {section === "inventory" && <InventoryView />}
         {section === "supplier" && <SupplierView />}
         {section === "alerts" && <AlertsView />}
+        {section === "api" && <APIKeysView />}
       </main>
     </div>
   );
@@ -312,6 +319,177 @@ function AlertsView() {
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+function APIKeysView() {
+  const [keys, setKeys] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchKeys();
+  }, []);
+
+  const fetchKeys = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('ah_token'); 
+      const res = await fetch('/api/user/keys', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setKeys(data.keys || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch keys', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateKey = async () => {
+    setGenerating(true);
+    try {
+      const token = localStorage.getItem('ah_token');
+      const res = await fetch('/api/user/keys', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        await fetchKeys();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to generate key');
+      }
+    } catch (e) {
+      console.error('Failed to generate key', e);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const revokeKey = async (id: string) => {
+    if (!confirm('Are you sure you want to revoke this API key? Applications using it will stop working.')) return;
+    try {
+      const token = localStorage.getItem('ah_token');
+      const res = await fetch(`/api/user/keys/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        await fetchKeys();
+      }
+    } catch (e) {
+      console.error('Failed to revoke key', e);
+    }
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  return (
+    <section>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">API Management</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage your API keys for B2B integration with PharmVerify.
+          </p>
+        </div>
+        <button
+          onClick={generateKey}
+          disabled={generating}
+          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
+          {generating ? 'Generating...' : 'New API Key'}
+        </button>
+      </header>
+
+      {loading ? (
+        <div className="flex h-32 items-center justify-center text-muted-foreground text-sm">
+          Loading keys...
+        </div>
+      ) : keys.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center">
+          <Key className="mx-auto h-12 w-12 text-muted-foreground/50" />
+          <h3 className="mt-4 text-sm font-semibold">No API keys</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Generate your first API key to start integrating our drug safety data.
+          </p>
+          <button
+            onClick={generateKey}
+            className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" />
+            Generate Key
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {keys.map((k) => (
+            <div key={k.id} className="rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 font-mono text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-muted px-2 py-1 text-foreground overflow-hidden text-ellipsis max-w-[200px] sm:max-w-none">
+                      {k.key}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(k.key, k.id)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {copiedId === k.id ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                    <span>Created: {new Date(k.created_at).toLocaleDateString()}</span>
+                    <span>Calls: {k.usage_count}</span>
+                    {k.last_used_at && (
+                      <span>Last used: {new Date(k.last_used_at).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => revokeKey(k.id)}
+                  className="rounded p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                  title="Revoke key"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-8 rounded-lg border border-sky-100 bg-sky-50 p-4">
+        <h4 className="text-sm font-semibold text-sky-900">Documentation</h4>
+        <p className="mt-1 text-sm text-sky-800">
+          Use the <code>X-API-Key</code> header in your requests to <code>/api/verify</code>.
+        </p>
+        <div className="mt-4 overflow-x-auto rounded bg-sky-950 p-3 text-xs text-sky-50">
+          <pre>
+            {`curl -X POST https://pharmverify.ng/api/verify \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"query": "Panadol"}'`}
+          </pre>
+        </div>
+      </div>
     </section>
   );
 }
