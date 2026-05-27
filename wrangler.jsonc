@@ -2,21 +2,23 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "gentle-morning-9d49",
   "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "src/server.ts",
   "migrations_dir": "migrations",
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "pharmverify-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "ba2fac08-a10e-45d6-89dc-27e3b986fb5a",
       "migrations_dir": "migrations"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "KV",
-      "id": "00000000-0000-0000-0000-000000000000"
+      "id": "67e4253ba3b0439e838c6638813423d9"
     }
   ]
 }
