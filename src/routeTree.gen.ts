@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PharmacyPortalRouteImport } from './routes/pharmacy-portal'
 import { Route as PharmaciesRouteImport } from './routes/pharmacies'
 import { Route as InteractionsRouteImport } from './routes/interactions'
@@ -39,6 +40,11 @@ import { Route as ApiAdminBroadcastAlertRouteImport } from './routes/api/admin/b
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PharmacyPortalRoute = PharmacyPortalRouteImport.update({
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
   '/pharmacy-portal': typeof PharmacyPortalRoute
+  '/pricing': typeof PricingRoute
   '/report': typeof ReportRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
   '/pharmacy-portal': typeof PharmacyPortalRoute
+  '/pricing': typeof PricingRoute
   '/report': typeof ReportRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/interactions': typeof InteractionsRoute
   '/pharmacies': typeof PharmaciesRoute
   '/pharmacy-portal': typeof PharmacyPortalRoute
+  '/pricing': typeof PricingRoute
   '/report': typeof ReportRoute
   '/admin/alerts': typeof AdminAlertsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/interactions'
     | '/pharmacies'
     | '/pharmacy-portal'
+    | '/pricing'
     | '/report'
     | '/admin/alerts'
     | '/admin/reports'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/interactions'
     | '/pharmacies'
     | '/pharmacy-portal'
+    | '/pricing'
     | '/report'
     | '/admin/alerts'
     | '/admin/reports'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/interactions'
     | '/pharmacies'
     | '/pharmacy-portal'
+    | '/pricing'
     | '/report'
     | '/admin/alerts'
     | '/admin/reports'
@@ -345,6 +357,7 @@ export interface RootRouteChildren {
   InteractionsRoute: typeof InteractionsRoute
   PharmaciesRoute: typeof PharmaciesRoute
   PharmacyPortalRoute: typeof PharmacyPortalRoute
+  PricingRoute: typeof PricingRoute
   ReportRoute: typeof ReportRoute
   ApiPharmaciesRoute: typeof ApiPharmaciesRoute
   ApiReportDrugRoute: typeof ApiReportDrugRoute
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pharmacy-portal': {
@@ -572,6 +592,7 @@ const rootRouteChildren: RootRouteChildren = {
   InteractionsRoute: InteractionsRoute,
   PharmaciesRoute: PharmaciesRoute,
   PharmacyPortalRoute: PharmacyPortalRoute,
+  PricingRoute: PricingRoute,
   ReportRoute: ReportRoute,
   ApiPharmaciesRoute: ApiPharmaciesRoute,
   ApiReportDrugRoute: ApiReportDrugRoute,
