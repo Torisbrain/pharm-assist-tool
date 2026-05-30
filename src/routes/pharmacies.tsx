@@ -1,4 +1,4 @@
-[import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   MapPin,
@@ -129,7 +129,6 @@ function PharmaciesPage() {
     setUsingFallback(false);
 
     try {
-      // If searching for Port Harcourt, use fallback immediately
       if (params.query && params.query.toLowerCase().includes("port harcourt")) {
         setResults(PORT_HARCOURT_PHARMACIES);
         setLoading(false);
@@ -152,17 +151,12 @@ function PharmaciesPage() {
     } catch (err) {
       console.error("Pharmacy API error:", err);
       
-      // FALLBACK: Use Port Harcourt data when API fails
       if (params.query?.toLowerCase().includes("port harcourt") || !params.query) {
         setResults(PORT_HARCOURT_PHARMACIES);
         setUsingFallback(true);
-        setError(
-          "Live data temporarily unavailable. Showing cached pharmacy list for Port Harcourt."
-        );
+        setError("Live data temporarily unavailable. Showing cached pharmacy list for Port Harcourt.");
       } else {
-        setError(
-          `Could not find pharmacies. Try searching for "Port Harcourt" instead.`
-        );
+        setError(`Could not find pharmacies. Try searching for "Port Harcourt" instead.`);
         setResults([]);
       }
     } finally {
@@ -181,7 +175,6 @@ function PharmaciesPage() {
       setError("Geolocation is not supported by your browser");
       return;
     }
-
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -211,9 +204,7 @@ function PharmaciesPage() {
             <MapPin className="h-6 w-6" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Pharmacy Locator</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Find registered pharmacies near you to verify drug availability and consult with licensed professionals.
-          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">Find registered pharmacies near you to verify drug availability and consult with licensed professionals.</p>
         </header>
 
         <Card className="mb-8 border-primary/20 shadow-sm">
@@ -231,19 +222,9 @@ function PharmaciesPage() {
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={loading} className="flex-1 sm:w-32">
-                  {loading && !userLocation ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    "Search"
-                  )}
+                  {loading && !userLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Search"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={findNearby}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
+                <Button type="button" variant="outline" onClick={findNearby} disabled={loading} className="flex items-center gap-2">
                   <Navigation className="h-4 w-4" />
                   <span>Near me</span>
                 </Button>
@@ -253,10 +234,7 @@ function PharmaciesPage() {
         </Card>
 
         {error && (
-          <Alert 
-            variant={usingFallback ? "default" : "destructive"} 
-            className={usingFallback ? "mb-8 border-yellow-200 bg-yellow-50 text-yellow-900" : "mb-8"}
-          >
+          <Alert variant={usingFallback ? "default" : "destructive"} className={usingFallback ? "mb-8 border-yellow-200 bg-yellow-50 text-yellow-900" : "mb-8"}>
             <Info className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -273,12 +251,8 @@ function PharmaciesPage() {
           {!loading && searched && results.length > 0 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Found {results.length} pharmacies {userLocation ? "near you" : `in "${query}"`}
-                </h2>
-                <Badge variant="secondary" className="font-normal">
-                  Sorted by distance
-                </Badge>
+                <h2 className="text-lg font-semibold text-foreground">Found {results.length} pharmacies {userLocation ? "near you" : `in "${query}"`}</h2>
+                <Badge variant="secondary" className="font-normal">Sorted by distance</Badge>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {results.map((p) => (
@@ -286,9 +260,7 @@ function PharmaciesPage() {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-2">
                         <CardTitle className="line-clamp-1 text-lg">{p.name}</CardTitle>
-                        <Badge variant="outline" className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">
-                          {p.status || "Open"}
-                        </Badge>
+                        <Badge variant="outline" className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">{p.status || "Open"}</Badge>
                       </div>
                       <CardDescription className="flex items-start gap-1.5 pt-1">
                         <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -299,9 +271,7 @@ function PharmaciesPage() {
                       {p.phone !== "Not listed" && p.phone ? (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Phone className="h-3.5 w-3.5" />
-                          <a href={`tel:${p.phone}`} className="font-medium text-foreground hover:text-primary hover:underline">
-                            {p.phone}
-                          </a>
+                          <a href={`tel:${p.phone}`} className="font-medium text-foreground hover:text-primary hover:underline">{p.phone}</a>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground italic">
@@ -309,24 +279,12 @@ function PharmaciesPage() {
                           Phone not listed
                         </div>
                       )}
-                      {p.distanceKm != null && (
-                        <p className="mt-3 text-sm font-bold text-primary">
-                          {p.distanceKm.toFixed(1)} km away
-                        </p>
-                      )}
-                      {p.rating != null && (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          ⭐ {p.rating} ({p.ratingCount} reviews)
-                        </p>
-                      )}
+                      {p.distanceKm != null && <p className="mt-3 text-sm font-bold text-primary">{p.distanceKm.toFixed(1)} km away</p>}
+                      {p.rating != null && <p className="mt-2 text-sm text-muted-foreground">⭐ {p.rating} ({p.ratingCount} reviews)</p>}
                     </CardContent>
                     <CardFooter className="bg-muted/30 pt-3">
                       <Button asChild variant="ghost" size="sm" className="w-full justify-between hover:bg-primary/10 hover:text-primary">
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`} target="_blank" rel="noopener noreferrer">
                           <span>Get Directions</span>
                           <ExternalLink className="h-4 w-4" />
                         </a>
@@ -345,35 +303,31 @@ function PharmaciesPage() {
                   <MapPin className="h-8 w-8 text-muted-foreground/40" />
                 </div>
                 <h3 className="text-xl font-semibold">No pharmacies found</h3>
-                <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
-                  We couldn't find any registered pharmacies in this specific area. Try searching for a larger city or check your spelling.
-                </p>
-                <Button variant="outline" className="mt-6" onClick={() => setQuery("")}>
-                  Clear search
-                </Button>
+                <p className="mx-auto mt-2 max-w-sm text-muted-foreground">We couldn't find any registered pharmacies in this specific area. Try searching for a larger city or check your spelling.</p>
+                <Button variant="outline" className="mt-6" onClick={() => setQuery("")}>Clear search</Button>
               </CardContent>
             </Card>
           )}
 
           {!searched && !loading && (
             <div className="grid gap-6 sm:grid-cols-3">
-               {[
-                 { title: "Registered Only", desc: "We only show pharmacies verified by regulatory bodies.", icon: Package },
-                 { title: "Find Nearby", desc: "Use your GPS to find the closest help in an emergency.", icon: Navigation },
-                 { title: "Real Data", desc: "Data sourced from OpenStreetMap and Nominatim.", icon: Info }
-               ].map((item, i) => (
-                 <div key={i} className="rounded-xl border bg-card p-6 text-center shadow-sm">
-                   <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/5 text-primary">
-                     <item.icon className="h-5 w-5" />
-                   </div>
-                   <h3 className="font-semibold">{item.title}</h3>
-                   <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                 </div>
-               ))}
+              {[
+                { title: "Registered Only", desc: "We only show pharmacies verified by regulatory bodies.", icon: Package },
+                { title: "Find Nearby", desc: "Use your GPS to find the closest help in an emergency.", icon: Navigation },
+                { title: "Real Data", desc: "Data sourced from OpenStreetMap and Nominatim.", icon: Info }
+              ].map((item, i) => (
+                <div key={i} className="rounded-xl border bg-card p-6 text-center shadow-sm">
+                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/5 text-primary">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold">{item.title}</h3>
+                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
             </div>
           )}
         </section>
       </div>
     </main>
   );
-}]
+}
